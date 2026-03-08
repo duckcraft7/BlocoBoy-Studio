@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartucho Studio</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171b2e;
+      --soft: #20263d;
+      --text: #eef2ff;
+      --muted: #aeb8d6;
+      --accent: #6ea8ff;
+      --accent-2: #8dffb1;
+      --danger: #ff7b7b;
+      --border: #2b3352;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #0c1020 0%, #11162a 100%);
+      color: var(--text);
+    }
+
+    header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .panel h2, .panel h3 {
+      margin-top: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+    }
+
+    button, select, input, textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      color: var(--text);
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button.primary { background: var(--accent); color: #08101f; border: none; }
+    button.secondary { background: #28314e; }
+    button.success { background: var(--accent-2); color: #08150d; border: none; }
+    button.danger { background: var(--danger); color: #2a0606; border: none; }
+
+    .main {
+      display: grid;
+      gap: 20px;
+    }
+
+    .block-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .block {
+      background: #222846;
+      border: 1px solid #384067;
+      border-radius: 14px;
+      padding: 12px;
+      cursor: grab;
+      user-select: none;
+      transition: transform .15s ease;
+    }
+
+    .block:hover { transform: translateY(-2px); }
+    .block small { color: var(--muted); display: block; margin-top: 6px; }
+
+    .workspace {
+      min-height: 280px;
+      padding: 14px;
+      background: #11162a;
+      border: 2px dashed #33406b;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .workspace-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: #1e2540;
+      border: 1px solid #36436f;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .workspace-item strong { display: block; }
+    .workspace-item span { color: var(--muted); font-size: 13px; }
+
+    .preview-shell {
+      display: grid;
+      grid-template-columns: 256px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      width: 256px;
+      height: 256px;
+      background: #000;
+      border: 4px solid #3a4a7d;
+      border-radius: 12px;
+    }
+
+    .codebox {
+      min-height: 240px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      overflow: auto;
+      background: #0b0f1c;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      color: #d8e2ff;
+    }
+
+    .ad-box {
+      min-height: 90px;
+      border: 2px dashed #4d5f9b;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: #13192d;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #263157;
+      border: 1px solid #3f4f84;
+      font-size: 12px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 30px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .wrap { grid-template-columns: 1fr; }
+      .preview-shell { grid-template-columns: 1fr; }
+      canvas { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cartucho Studio</h1>
+    <p>Crie jogos 2D simples em blocos, teste no navegador e baixe um pacote para colocar no SD do seu console.</p>
+  </header>
+
+  <div class="wrap">
+    <aside class="panel">
+      <h2>Projeto</h2>
+      <div class="toolbar">
+        <input id="projectName" value="Meu Jogo" placeholder="Nome do jogo" />
+        <select id="gameType">
+          <option value="maze">Labirinto</option>
+          <option value="runner">Corredor</option>
+          <option value="catch">Pegar itens</option>
+          <option value="shooter">Tiro simples</option>
+        </select>
+        <button class="primary" id="newProjectBtn">Novo projeto</button>
+        <button class="secondary" id="saveLocalBtn">Salvar no navegador</button>
+        <button class="secondary" id="loadLocalBtn">Carregar salvo</button>
+        <button class="success" id="exportBtn">Baixar pacote .json</button>
+      </div>
+
+      <div class="status" id="status">Pronto para criar.</div>
+
+      <hr style="border-color: var(--border); margin: 18px 0;">
+
+      <h3>Controles do console</h3>
+      <div class="pill">↑ ↓ ← →</div>
+      <div class="pill">A</div>
+      <div class="pill">B</div>
+
+      <h3>Monetização</h3>
+      <p style="color: var(--muted); line-height: 1.5;">
+        Os anúncios ficam só no site. O jogo baixado para o SD não tem anúncio.
+      </p>
+
+      <div class="ad-box">Espaço de anúncio do site</div>
+    </aside>
+
+    <main class="main">
+      <section class="panel">
+        <h2>Blocos</h2>
+        <div class="block-grid" id="blocks"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Lógica do jogo</h2>
+        <div class="workspace" id="workspace"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Prévia + código exportado</h2>
+        <div class="preview-shell">
+          <canvas id="gameCanvas" width="128" height="128"></canvas>
+          <div>
+            <div class="toolbar" style="margin-bottom: 12px;">
+              <button class="primary" id="playBtn">Testar jogo</button>
+              <button class="secondary" id="stopBtn">Parar</button>
+            </div>
+            <div class="codebox" id="exportView"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    Protótipo inicial para GitHub Pages. Depois dá para separar em arquivos, adicionar login, galeria pública e importação para cartão SD.
+  </footer>
+
+  <script>
+    const BLOCK_LIBRARY = [
+      { type: 'spawn_player', title: 'Criar jogador', desc: 'Define a posição inicial do personagem.' },
+      { type: 'spawn_enemy', title: 'Criar inimigo', desc: 'Adiciona um inimigo simples.' },
+      { type: 'spawn_coin', title: 'Criar moeda', desc: 'Adiciona item para coletar.' },
+      { type: 'move_4dir', title: 'Mover 4 direções', desc: 'Usa setas do console.' },
+      { type: 'wall', title: 'Parede', desc: 'Cria obstáculo sólido.' },
+      { type: 'goal', title: 'Meta / saída', desc: 'Termina a fase ao tocar.' },
+      { type: 'score_add', title: 'Somar ponto', desc: 'Aumenta a pontuação ao coletar.' },
+      { type: 'life_minus', title: 'Perder vida', desc: 'Remove uma vida ao tocar no inimigo.' },
+      { type: 'show_text', title: 'Mostrar texto', desc: 'Texto curto na tela do console.' },
+      { type: 'next_level', title: 'Próxima fase', desc: 'Vai para a próxima fase.' }
+    ];
+
+    const blocksEl = document.getElementById('blocks');
+    const workspaceEl = document.getElementById('workspace');
+    const exportView = document.getElementById('exportView');
+    const statusEl = document.getElementById('status');
+    const ctx = document.getElementById('gameCanvas').getContext('2d');
+
+    const state = {
+      project: {
+        name: 'Meu Jogo',
+        type: 'maze',
+        blocks: []
+      },
+      running: false,
+      keys: {}
+    };
+
+    function drawBlockLibrary() {
+      blocksEl.innerHTML = '';
+      BLOCK_LIBRARY.forEach((block) => {
+        const div = document.createElement('div');
+        div.className = 'block';
+        div.innerHTML = `<strong>${block.title}</strong><small>${block.desc}</small>`;
+        div.onclick = () => addBlock(block.type);
+        blocksEl.appendChild(div);
+      });
+    }
+
+    function labelForType(type) {
+      return BLOCK_LIBRARY.find(b => b.type === type)?.title || type;
+    }
+
+    function addBlock(type) {
+      state.project.blocks.push({ type, id: crypto.randomUUID() });
+      renderWorkspace();
+      renderExport();
+      setStatus(`Bloco adicionado: ${labelForType(type)}`);
+    }
+
+    function removeBlock(id) {
+      state.project.blocks = state.project.blocks.filter(b => b.id !== id);
+      renderWorkspace();
+      renderExport();
+      setStatus('Bloco removido.');
+    }
+
+    function moveBlock(id, dir) {
+      const i = state.project.blocks.findIndex(b => b.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= state.project.blocks.length) return;
+      [state.project.blocks[i], state.project.blocks[j]] = [state.project.blocks[j], state.project.blocks[i]];
+      renderWorkspace();
+      renderExport();
+    }
+
+    function renderWorkspace() {
+      workspaceEl.innerHTML = '';
+      if (!state.project.blocks.length) {
+        workspaceEl.innerHTML = '<div style="color: var(--muted)">Toque nos blocos acima para montar a lógica do jogo.</div>';
+        return;
+      }
+
+      state.project.blocks.forEach((block) => {
+        const row = document.createElement('div');
+        row.className = 'workspace-item';
+        row.innerHTML = `
+          <div>
+            <strong>${labelForType(block.type)}</strong>
+            <span>${block.type}</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="moveFromInline('${block.id}', -1)">↑</button>
+            <button onclick="moveFromInline('${block.id}', 1)">↓</button>
+            <button class="danger" onclick="removeFromInline('${block.id}')">X</button>
+          </div>
+        `;
+        workspaceEl.appendChild(row);
+      });
+    }
+
+    window.removeFromInline = removeBlock;
+    window.moveFromInline = moveBlock;
+
+    function exportProject() {
+      return {
+        format: 'cartucho-studio-game/v1',
+        target: 'arduino-nano-oled-sd',
+        controls: ['up', 'down', 'left', 'right', 'A', 'B'],
+        project: state.project
+      };
+    }
+
+    function renderExport() {
+      exportView.textContent = JSON.stringify(exportProject(), null, 2);
+    }
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function newProject() {
+      state.project = {
+        name: document.getElementById('projectName').value || 'Meu Jogo',
+        type: document.getElementById('gameType').value,
+        blocks: []
+      };
+      renderWorkspace();
+      renderExport();
+      drawPreview();
+      setStatus('Novo projeto criado.');
+    }
+
+    function saveLocal() {
+      state.project.name = document.getElementById('projectName').value || 'Meu Jogo';
+      state.project.type = document.getElementById('gameType').value;
+      localStorage.setItem('cartuchoStudioProject', JSON.stringify(state.project));
+      setStatus('Projeto salvo no navegador.');
+    }
+
+    function loadLocal() {
+      const raw = localStorage.getItem('cartuchoStudioProject');
+      if (!raw) {
+        setStatus('Nenhum projeto salvo encontrado.');
+        return;
+      }
+      state.project = JSON.parse(raw);
+      document.getElementById('projectName').value = state.project.name;
+      document.getElementById('gameType').value = state.project.type;
+      renderWorkspace();
+      renderExport();
+      drawPreview();
+      setStatus('Projeto carregado.');
+    }
+
+    function downloadFile() {
+      state.project.name = document.getElementById('projectName').value || 'Meu Jogo';
+      state.project.type = document.getElementById('gameType').value;
+      const blob = new Blob([JSON.stringify(exportProject(), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${state.project.name.replace(/\s+/g, '_').toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Pacote do jogo baixado.');
+    }
+
+    function drawPreview() {
+      ctx.clearRect(0, 0, 128, 128);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 128, 128);
+
+      ctx.strokeStyle = '#2f3f6f';
+      for (let x = 0; x <= 128; x += 16) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 128);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= 128; y += 16) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(128, y);
+        ctx.stroke();
+      }
+
+      let hasPlayer = false;
+      let hasEnemy = false;
+      let hasCoin = false;
+      let hasGoal = false;
+
+      for (const block of state.project.blocks) {
+        if (block.type === 'spawn_player') hasPlayer = true;
+        if (block.type === 'spawn_enemy') hasEnemy = true;
+        if (block.type === 'spawn_coin') hasCoin = true;
+        if (block.type === 'goal') hasGoal = true;
+        if (block.type === 'wall') {
+          ctx.fillStyle = '#6b86d6';
+          ctx.fillRect(48, 32, 16, 64);
+          ctx.fillRect(80, 16, 16, 64);
+        }
+      }
+
+      if (hasPlayer) {
+        ctx.fillStyle = '#8dffb1';
+        ctx.fillRect(16, 16, 12, 12);
+      }
+      if (hasEnemy) {
+        ctx.fillStyle = '#ff7b7b';
+        ctx.fillRect(96, 96, 12, 12);
+      }
+      if (hasCoin) {
+        ctx.fillStyle = '#ffe66e';
+        ctx.fillRect(56, 104, 8, 8);
+      }
+      if (hasGoal) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(104, 8, 12, 12);
+      }
+
+      ctx.fillStyle = '#d8e2ff';
+      ctx.font = '8px monospace';
+      ctx.fillText(state.project.name.slice(0, 18), 4, 124);
+    }
+
+    let player = { x: 16, y: 16, size: 12 };
+    function tick() {
+      if (!state.running) return;
+      const speed = 1.5;
+      if (state.keys['ArrowUp']) player.y -= speed;
+      if (state.keys['ArrowDown']) player.y += speed;
+      if (state.keys['ArrowLeft']) player.x -= speed;
+      if (state.keys['ArrowRight']) player.x += speed;
+      player.x = Math.max(0, Math.min(116, player.x));
+      player.y = Math.max(0, Math.min(116, player.y));
+
+      drawPreview();
+      if (state.project.blocks.some(b => b.type === 'spawn_player')) {
+        ctx.fillStyle = '#8dffb1';
+        ctx.fillRect(player.x, player.y, player.size, player.size);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    document.addEventListener('keydown', (e) => state.keys[e.key] = true);
+    document.addEventListener('keyup', (e) => state.keys[e.key] = false);
+
+    document.getElementById('newProjectBtn').onclick = newProject;
+    document.getElementById('saveLocalBtn').onclick = saveLocal;
+    document.getElementById('loadLocalBtn').onclick = loadLocal;
+    document.getElementById('exportBtn').onclick = downloadFile;
+    document.getElementById('playBtn').onclick = () => {
+      state.running = true;
+      player = { x: 16, y: 16, size: 12 };
+      setStatus('Prévia rodando.');
+      tick();
+    };
+    document.getElementById('stopBtn').onclick = () => {
+      state.running = false;
+      drawPreview();
+      setStatus('Prévia parada.');
+    };
+
+    document.getElementById('projectName').addEventListener('input', (e) => {
+      state.project.name = e.target.value;
+      renderExport();
+      drawPreview();
+    });
+
+    document.getElementById('gameType').addEventListener('change', (e) => {
+      state.project.type = e.target.value;
+      renderExport();
+    });
+
+    drawBlockLibrary();
+    renderWorkspace();
+    renderExport();
+    drawPreview();
+  </script>
+</body>
+</html>
