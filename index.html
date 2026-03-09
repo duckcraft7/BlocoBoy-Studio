@@ -2,180 +2,146 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NanoBoy Custom Engine</title>
+    <title>NanoBoy ESP32 - Pro Engine</title>
     <style>
-        :root { --gb-green: #8bac0f; --gb-dark: #0f380f; --ui-bg: #1a1a1a; }
-        body { font-family: 'Courier New', monospace; background: var(--ui-bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        :root { --accent: #e67e22; --bg: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #2c3e50; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--accent); }
+        .main { display: flex; flex: 1; overflow: hidden; }
         
-        header { background: #333; padding: 15px; display: flex; justify-content: space-between; border-bottom: 3px solid var(--gb-dark); }
-        
-        .container { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Paleta de Blocos */
-        #palette { width: 250px; background: #252526; padding: 10px; border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
-        
-        /* Área de Script */
-        #script-area { flex: 1; background: #1e1e1e; padding: 20px; overflow-y: auto; position: relative; }
-        .block { 
-            padding: 12px; border-radius: 5px; cursor: grab; font-weight: bold; font-size: 13px;
-            display: flex; align-items: center; gap: 8px; border: 2px solid rgba(0,0,0,0.2);
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.3); margin-bottom: 5px;
-        }
-        .block-event { background: #ff4757; } /* Vermelho: Gatilhos */
-        .block-move { background: #54a0ff; }  /* Azul: Movimento */
-        .block-logic { background: #2ed573; } /* Verde: Lógica/Tetris */
-        .block-math { background: #ffa502; }  /* Laranja: Valores */
+        /* Estilo dos nossos blocos customizados */
+        #palette { width: 280px; background: #252526; padding: 15px; border-right: 2px solid #000; overflow-y: auto; }
+        .block { padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: grab; font-weight: bold; border-left: 5px solid rgba(0,0,0,0.3); }
+        .b-event { background: #eb4d4b; } 
+        .b-ia { background: #686de0; }
+        .b-world { background: #6ab04c; }
+        .b-math { background: #f0932b; }
 
-        /* Preview Area */
-        #preview { width: 350px; background: #2d2d2d; padding: 20px; border-left: 2px solid #000; display: flex; flex-direction: column; align-items: center; }
-        canvas { background: var(--gb-green); border: 8px solid #555; width: 256px; height: 128px; image-rendering: pixelated; }
+        #workspace { flex: 1; background: #1e1e1e; padding: 20px; position: relative; overflow-y: auto; outline: none; }
+        #preview { width: 350px; background: #2d3436; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         
-        .drop-zone { border: 2px dashed #444; min-height: 100px; padding: 10px; border-radius: 8px; }
-        textarea { width: 100%; height: 150px; background: #000; color: #0f0; border: none; font-size: 10px; margin-top: 10px; padding: 10px; }
+        canvas { background: #95afc0; border: 6px solid #333; width: 256px; height: 128px; image-rendering: pixelated; }
+        textarea { width: 100%; height: 200px; background: #000; color: #00ff00; font-family: monospace; font-size: 11px; margin-top: 15px; padding: 10px; border: 1px solid var(--accent); }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0">NANOBOY SCRIPT PRO 🚀</h2>
-    <button onclick="exportarArduino()" style="background:var(--gb-green); border:none; padding:8px 15px; cursor:pointer; font-weight:bold">GERAR .INO</button>
+    <h2 style="margin:0">NanoBoy ESP32 🚀</h2>
+    <button class="btn" style="background:var(--accent)" onclick="gerarArduino()">GERAR CÓDIGO WOKWI</button>
 </header>
 
-<div class="container">
+<div class="main">
     <div id="palette">
-        <h3>Blocos</h3>
-        <div class="block block-event" draggable="true" data-type="loop">🔄 Sempre (Loop)</div>
-        <div class="block block-event" draggable="true" data-type="btn_a">🔘 Se Apertar Botão A</div>
-        <div class="block block-move" draggable="true" data-type="gravity">🍎 Aplicar Gravidade</div>
-        <div class="block block-move" draggable="true" data-type="jump">🦘 Impulso (Pulo)</div>
-        <div class="block block-logic" draggable="true" data-type="grid">🧱 Criar Grade Tetris</div>
-        <div class="block block-logic" draggable="true" data-type="move_grid">↔️ Mover na Grade</div>
-        <div class="block block-math" draggable="true" data-type="score">🏆 Ganhar +1 Ponto</div>
+        <h3>Lógica de Jogo</h3>
+        <div class="block b-event" draggable="true" data-type="gravity">🍎 Física: Gravidade (Flappy)</div>
+        <div class="block b-ia" draggable="true" data-type="ia_follow">🧠 IA: Inimigo Persegue</div>
+        <div class="block b-ia" draggable="true" data-type="kill">💀 Se Tocar: Matar Player</div>
+        <div class="block b-world" draggable="true" data-type="wall">🧱 Criar Parede Sólida</div>
+        <div class="block b-world" draggable="true" data-type="grid">🏁 Ativar Grade (Tetris)</div>
+        <div class="block b-math" draggable="true" data-type="jump">⬆️ Botão: Pular/Subir</div>
     </div>
 
-    <div id="script-area">
-        <h3>Script do Jogo</h3>
-        <div id="workspace" class="drop-zone">
-            </div>
+    <div id="workspace" ondragover="event.preventDefault()" ondrop="drop(event)">
+        <p style="color:#666">Arraste os blocos para cá...</p>
     </div>
 
     <div id="preview">
-        <canvas id="screen" width="128" height="64"></canvas>
-        <div style="margin-top:10px; display:flex; gap:5px">
-            <button onclick="runGame()">▶ TESTAR</button>
-            <button onclick="document.getElementById('workspace').innerHTML=''">🗑 LIMPAR</button>
+        <canvas id="gameScreen" width="128" height="64"></canvas>
+        <div style="margin-top:10px">
+            <button class="btn" style="background:#2ecc71" onclick="testar()">TESTAR PREVIEW</button>
         </div>
-        <textarea id="code-box" readonly placeholder="Código C++ para Arduino Nano..."></textarea>
+        <textarea id="code-output" readonly></textarea>
     </div>
 </div>
 
 <script>
-    const workspace = document.getElementById('workspace');
-    let gameActive = false;
-    let py = 30, pv = 0; // Física do Player
-    let score = 0;
+    let px = 60, py = 30, pv = 0;
+    let ex = 10, ey = 10;
+    let gameLoop;
 
-    // --- SISTEMA DE DRAG AND DROP ---
-    document.addEventListener('dragstart', (e) => {
-        if(e.target.classList.contains('block')) {
-            e.dataTransfer.setData('type', e.target.dataset.type);
-            e.dataTransfer.setData('html', e.target.outerHTML);
-        }
-    });
-
-    workspace.addEventListener('dragover', (e) => e.preventDefault());
-
-    workspace.addEventListener('drop', (e) => {
+    function drop(e) {
         e.preventDefault();
-        const type = e.dataTransfer.getData('type');
-        const html = e.dataTransfer.getData('html');
-        
-        const newBlock = document.createElement('div');
-        newBlock.innerHTML = html;
-        const el = newBlock.firstChild;
-        el.style.cursor = 'default';
-        
-        // Adicionar botão de remover
-        const del = document.createElement('span');
-        del.innerHTML = ' [x]';
-        del.style.color = 'black';
-        del.style.cursor = 'pointer';
-        del.onclick = () => el.remove();
-        el.appendChild(del);
-        
-        workspace.appendChild(el);
+        const type = e.dataTransfer.getData("type");
+        const block = document.createElement("div");
+        block.className = "block " + e.srcElement.className;
+        block.innerHTML = e.dataTransfer.getData("text") + " <span onclick='this.parentElement.remove()' style='float:right; cursor:pointer'>❌</span>";
+        block.dataset.type = type;
+        document.getElementById("workspace").appendChild(block);
+    }
+
+    document.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData("type", e.target.dataset.type);
+        e.dataTransfer.setData("text", e.target.innerText);
     });
 
-    // --- MOTOR DO JOGO (PREVIEW) ---
-    function runGame() {
-        gameActive = true;
-        const ctx = document.getElementById('screen').getContext('2d');
-        const blocks = Array.from(workspace.children).map(b => b.dataset.type);
+    function testar() {
+        const ctx = document.getElementById('gameScreen').getContext('2d');
+        const blocks = Array.from(document.getElementById('workspace').querySelectorAll('.block')).map(b => b.dataset.type);
         
-        py = 30; pv = 0; score = 0;
+        if(gameLoop) clearInterval(gameLoop);
+        px = 60; py = 30; pv = 0; ex = 10; ey = 10;
 
-        function loop() {
-            if(!gameActive) return;
-            ctx.fillStyle = "#8bac0f";
+        gameLoop = setInterval(() => {
+            ctx.fillStyle = "#95afc0";
             ctx.fillRect(0,0,128,64);
-            ctx.fillStyle = "#0f380f";
+            ctx.fillStyle = "#2d3436";
 
-            // Processar Lógica de Blocos
             blocks.forEach(type => {
-                if(type === 'gravity') {
-                    pv += 0.2; // Gravidade
-                    py += pv;
+                if(type === 'gravity') { pv += 0.3; py += pv; }
+                if(type === 'ia_follow') { 
+                    if(ex < px) ex += 0.5; else ex -= 0.5;
+                    if(ey < py) ey += 0.5; else ey -= 0.5;
                 }
-                if(type === 'grid') {
-                    // Desenha mini grade de Tetris no fundo
-                    for(let i=0; i<128; i+=8) ctx.strokeRect(i,0,1,64);
+                if(type === 'kill') {
+                    if(Math.abs(px-ex) < 5 && Math.abs(py-ey) < 5) { px = 60; py = 30; }
                 }
             });
 
-            // Chão (Morte)
-            if(py > 60) { py = 60; pv = 0; }
-
-            ctx.fillRect(40, py, 6, 6); // O Player
-            ctx.fillText("SCORE: " + score, 5, 10);
-
-            requestAnimationFrame(loop);
-        }
-        loop();
+            if(py > 58) { py = 58; pv = 0; }
+            ctx.fillRect(px, py, 6, 6); // Player
+            ctx.strokeRect(ex, ey, 6, 6); // Inimigo
+        }, 30);
     }
 
-    // --- TRADUTOR PARA ARDUINO NANO ---
-    function exportarArduino() {
-        const blocks = Array.from(workspace.children).map(b => b.dataset.type);
-        let loopCode = "";
+    function gerarArduino() {
+        const blocks = Array.from(document.getElementById('workspace').querySelectorAll('.block')).map(b => b.dataset.type);
+        let logic = "";
         
-        blocks.forEach(type => {
-            switch(type) {
-                case 'gravity': loopCode += "  v += 0.5; y += v;\n"; break;
-                case 'jump': loopCode += "  if(digitalRead(2)==LOW) v = -3;\n"; break;
-                case 'score': loopCode += "  ponto++;\n"; break;
-                case 'grid': loopCode += "  desenharGrade();\n"; break;
-            }
+        blocks.forEach(t => {
+            if(t === 'gravity') logic += "  vel += 0.2; py += vel;\n";
+            if(t === 'ia_follow') logic += "  if(ex < px) ex += 0.3; else ex -= 0.3;\n  if(ey < py) ey += 0.3; else ey -= 0.3;\n";
+            if(t === 'kill') logic += "  if(abs(px-ex)<5 && abs(py-ey)<5) { px=60; py=30; }\n";
+            if(t === 'jump') logic += "  if(digitalRead(26) == LOW) vel = -2;\n";
         });
 
-        const fullCode = `
+        const code = `
 #include <Adafruit_SSD1306.h>
+#define SDA 21
+#define SCL 22
+
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
-float y=30, v=0;
-int ponto=0;
+float px=60, py=30, vel=0;
+float ex=10, ey=10;
 
 void setup() {
+  Wire.begin(SDA, SCL);
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(2, INPUT_PULLUP); // Botão de Pulo
+  pinMode(26, INPUT_PULLUP); // Botão A
 }
 
 void loop() {
   d.clearDisplay();
-  ${loopCode}
-  d.fillRect(40, (int)y, 6, 6, WHITE);
+  
+  ${logic}
+
+  d.fillRect(px, py, 6, 6, WHITE); // Player
+  d.drawRect(ex, ey, 6, 6, WHITE); // Inimigo
   d.display();
-  delay(30);
+  delay(20);
 }`;
-        document.getElementById('code-box').value = fullCode;
+        document.getElementById('code-output').value = code;
     }
 </script>
 </body>
