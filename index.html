@@ -2,445 +2,203 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Game Creator para Arduino Nano - Como Scratch</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    #tabs { display: flex; background: #f0f0f0; }
-    .tab-button { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; }
-    .tab-button.active { background: white; font-weight: bold; }
-    #blocklyDiv { height: 480px; width: 100%; border: 1px solid #ccc; }
-    #code { width: 100%; height: 300px; font-family: monospace; }
-    button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
-    button:hover { background: #45a049; }
-  </style>
-  <!-- Blockly scripts via UNPKG CDN -->
-  <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
-  <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
-  <script src="https://unpkg.com/blockly/javascript_compressed.js"></script> <!-- Adaptado para C++ -->
+  <title>NanoBoy Purist v18.1 (Fix)</title>
+  
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
   <script src="https://unpkg.com/blockly/msg/pt-br.js"></script>
+
+  <style>
+    :root { --main: #00ff88; --bg: #050505; --panel: #111; }
+    body { background: var(--bg); color: white; font-family: 'Consolas', monospace; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
+    .main-container { display: flex; flex: 1; overflow: hidden; }
+    #sidebar { width: 220px; background: #0a0a0a; border-right: 1px solid #222; padding: 15px; }
+    .project-item { padding: 10px; background: #151515; margin-bottom: 5px; border-radius: 4px; cursor: pointer; border: 1px solid #222; font-size: 12px; transition: 0.3s; }
+    .project-active { border-color: var(--main); background: #1a1a1a; color: var(--main); box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+    #editorArea { flex: 1; display: flex; flex-direction: column; }
+    #blocklyDiv { flex: 1; }
+    #codeSide { width: 380px; background: #0a0a0a; padding: 15px; border-left: 1px solid #222; display: flex; flex-direction: column; }
+    textarea { flex: 1; background: #000; color: var(--main); font-family: 'Consolas', monospace; font-size: 11px; padding: 10px; border: 1px solid #222; resize: none; outline: none; }
+    .btn { background: var(--main); color: #000; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+  </style>
 </head>
 <body>
-  <h1>Crie Jogos para Arduino Nano com Blocos Visuais</h1>
-  <p>Arraste blocos para criar menu, jogos como Maze (com levels) e Flappy Bird (infinito). Use as abas para separar Jogos (menu e jogos) e Levels (defina levels do maze). Clique em "Gerar Código" para obter o código Arduino. Cole no Arduino IDE e upload para o Nano. Use simuladores como Wokwi.com para testar.</p>
-  
-  <div id="tabs">
-    <div class="tab-button active" onclick="switchTab('jogos')">Aba de Jogos</div>
-    <div class="tab-button" onclick="switchTab('levels')">Aba de Levels</div>
+
+<header>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <h2 style="margin:0; font-size: 18px; color: var(--main);">NANOBOY_PURIST_v18.1</h2>
   </div>
-  
-  <div id="blocklyDiv"></div>
-  
-  <!-- Toolbox para Aba de Jogos -->
-  <xml id="toolbox-jogos" style="display: none">
-    <category name="Menu">
-      <block type="menu_iniciar"></block>
-      <block type="menu_adicionar_opcao"></block>
-      <block type="menu_selecionar"></block>
-    </category>
-    <category name="Maze">
-      <block type="maze_carregar_level">
-        <field name="LEVEL">1</field>
-      </block>
-      <block type="maze_mover_jogador"></block>
-      <block type="maze_verificar_fim"></block>
-      <block type="maze_desenhar"></block>
-    </category>
-    <category name="Flappy Bird">
-      <block type="flappy_iniciar"></block>
-      <block type="flappy_aplicar_gravidade"></block>
-      <block type="flappy_pular"></block>
-      <block type="flappy_gerar_tubos"></block>
-      <block type="flappy_contar_pontos"></block>
-      <block type="flappy_verificar_colisao"></block>
-    </category>
-    <category name="Lógica Avançada">
-      <block type="controls_if"></block>
-      <block type="controls_ifelse"></block>
-      <block type="controls_repeat_ext">
-        <value name="TIMES">
-          <shadow type="math_number">
-            <field name="NUM">10</field>
-          </shadow>
-        </value>
-      </block>
-      <block type="controls_whileUntil"></block>
-      <block type="controls_for">
-        <value name="FROM">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
-        <value name="TO">
-          <shadow type="math_number">
-            <field name="NUM">10</field>
-          </shadow>
-        </value>
-        <value name="BY">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
-      </block>
-      <block type="logic_compare"></block>
-      <block type="logic_operation"></block>
-      <block type="logic_negate"></block>
-      <block type="logic_boolean"></block>
-    </category>
-    <category name="Hardware">
-      <block type="hardware_display_oled"></block>
-      <block type="hardware_joystick_ler"></block>
-      <block type="hardware_buzzer_tocar"></block>
-    </category>
-    <category name="Variáveis">
-      <block type="variables_get"></block>
-      <block type="variables_set"></block>
-    </category>
-    <category name="Matemática">
+  <button class="btn" onclick="gerarCodigoOS()">🚀 COMPILAR PARA ARDUINO</button>
+</header>
+
+<div class="main-container">
+  <div id="sidebar">
+    <h3 style="font-size:12px; color:#555">PROJETOS</h3>
+    <input type="text" id="projName" placeholder="Novo Jogo..." style="background:#000; color:#fff; border:1px solid #333; padding:5px; width:80%; margin-bottom:10px;">
+    <button class="btn" style="width:100%" onclick="novoProjeto()">+ ADICIONAR</button>
+    <div id="projectList" style="margin-top: 15px;"></div>
+  </div>
+
+  <div id="editorArea">
+    <div id="blocklyDiv"></div>
+  </div>
+
+  <div id="codeSide">
+    <h3>C++_MODULAR_CODE</h3>
+    <textarea id="outputCode" readonly></textarea>
+  </div>
+</div>
+
+<xml id="toolbox" style="display: none">
+  <category name="🎮 JOGADOR" colour="160">
+    <block type="nb_player_move"></block>
+    <block type="nb_player_draw"></block>
+  </category>
+  <category name="🧱 MUNDO" colour="200">
+    <block type="nb_draw_wall"></block>
+    <block type="nb_check_collision"></block>
+    <block type="nb_clear_screen"></block>
+  </category>
+  <category name="⚙️ LÓGICA" colour="210">
+    <block type="nb_if"></block>
+    <block type="nb_set_val"></block>
+    <block type="nb_get_val"></block>
+    <block type="nb_math_val"></block>
+    <block type="nb_change_state"></block>
+  </category>
+  <category name="💬 TEXTO" colour="160">
+      <block type="nb_text_raw"></block>
       <block type="math_number"></block>
-      <block type="math_arithmetic"></block>
-      <block type="math_random_int">
-        <value name="FROM">
-          <shadow type="math_number">
-            <field name="NUM">1</field>
-          </shadow>
-        </value>
-        <value name="TO">
-          <shadow type="math_number">
-            <field name="NUM">10</field>
-          </shadow>
-        </value>
-      </block>
-    </category>
-  </xml>
-  
-  <!-- Toolbox para Aba de Levels -->
-  <xml id="toolbox-levels" style="display: none">
-    <category name="Definir Levels">
-      <block type="level_definir_maze">
-        <field name="LEVEL">1</field>
-        <field name="MAPA">#@.............#\n#.####.####.#.#\n etc.</field>
-      </block>
-      <block type="level_adicionar_obstaculo"></block>
-      <block type="level_definir_saida"></block>
-    </category>
-    <category name="Lógica Avançada">
-      <!-- Mesmos blocos de lógica da aba de jogos -->
-      <block type="controls_if"></block>
-      <block type="controls_ifelse"></block>
-      <block type="controls_repeat_ext"></block>
-      <block type="controls_whileUntil"></block>
-      <block type="controls_for"></block>
-      <block type="logic_compare"></block>
-      <block type="logic_operation"></block>
-      <block type="logic_negate"></block>
-      <block type="logic_boolean"></block>
-    </category>
-    <category name="Variáveis">
-      <block type="variables_get"></block>
-      <block type="variables_set"></block>
-    </category>
-    <category name="Matemática">
-      <block type="math_number"></block>
-      <block type="math_arithmetic"></block>
-    </category>
-  </xml>
-  
-  <button onclick="gerarCodigo()">Gerar Código Arduino</button>
-  <textarea id="code" readonly></textarea>
-  
-  <script>
-    var workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox-jogos'),
-      zoom: { controls: true, wheel: true, startScale: 1.0 },
-      media: 'https://unpkg.com/blockly/media/'
+      <block type="nb_draw_text"></block>
+  </category>
+</xml>
+
+<script>
+// XML correto e blindado contra erros do Blockly
+const emptyXML = '<xml xmlns="https://developers.google.com/blockly/xml"></xml>';
+
+let projetos = { "Menu": { xml: emptyXML, id: 0 } };
+let projetoAtivo = "Menu";
+
+// --- DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS ---
+Blockly.defineBlocksWithJsonArray([
+  { "type": "nb_player_move", "message0": "Mover Player %1 em %2 pixels", "args0": [{ "type": "field_dropdown", "name": "DIR", "options": [["X (Horiz)", "X"], ["Y (Vert)", "Y"]] }, { "type": "input_value", "name": "VAL", "check": "Number" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nb_player_draw", "message0": "Desenhar Player X:%1 Y:%2", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nb_draw_wall", "message0": "Parede X:%1 Y:%2 Larg:%3 Alt:%4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 200 },
+  { "type": "nb_check_collision", "message0": "Bateu em algo no X:%1 Y:%2 ?", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "output": "Boolean", "colour": 200 },
+  { "type": "nb_clear_screen", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 200 },
+  { "type": "nb_if", "message0": "Se %1 então %2", "args0": [{ "type": "input_value", "name": "COND", "check": "Boolean" }, { "type": "input_statement", "name": "DO" }], "previousStatement": null, "nextStatement": null, "colour": 210 },
+  { "type": "nb_set_val", "message0": "Definir %1 para %2", "args0": [{ "type": "field_input", "name": "VAR", "text": "pontos" }, { "type": "input_value", "name": "VAL" }], "previousStatement": null, "nextStatement": null, "colour": 210 },
+  { "type": "nb_get_val", "message0": "Valor de %1", "args0": [{ "type": "field_input", "name": "VAR", "text": "pontos" }], "output": null, "colour": 210 },
+  { "type": "nb_math_val", "message0": "%1 %2 %3", "args0": [{ "type": "input_value", "name": "A" }, { "type": "field_dropdown", "name": "OP", "options": [["+", "+"], ["-", "-"], [">", ">"], ["<", "<"], ["==", "=="]] }, { "type": "input_value", "name": "B" }], "output": null, "colour": 210 },
+  { "type": "nb_change_state", "message0": "Mudar para Jogo ID: %1", "args0": [{ "type": "input_value", "name": "ID" }], "previousStatement": null, "nextStatement": null, "colour": 210 },
+  { "type": "nb_text_raw", "message0": "\" %1 \"", "args0": [{ "type": "field_input", "name": "TXT", "text": "JOGO" }], "output": "String", "colour": 160 },
+  { "type": "math_number", "message0": "%1", "args0": [{ "type": "field_number", "name": "NUM", "value": 0 }], "output": "Number", "colour": 230 },
+  { "type": "nb_draw_text", "message0": "Escrever %1 em X:%2 Y:%3", "args0": [{ "type": "input_value", "name": "T" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 }
+]);
+
+const gen = javascript.javascriptGenerator;
+gen.init = function(w) { gen.nameDB_ = new Blockly.Names(); gen.definitions_ = Object.create(null); };
+
+gen.forBlock['nb_player_move'] = function(b, g) { 
+    let dir = b.getFieldValue('DIR');
+    let val = g.valueToCode(b, 'VAL', 0) || '0';
+    return `player${dir} = player${dir} + (${val});\n`;
+};
+gen.forBlock['nb_player_draw'] = function(b, g) { return `d.fillRect(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}, 4, 4, WHITE);\n`; };
+gen.forBlock['nb_draw_wall'] = function(b, g) { return `d.fillRect(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}, ${g.valueToCode(b, 'W', 0) || 10}, ${g.valueToCode(b, 'H', 0) || 10}, WHITE);\n`; };
+gen.forBlock['nb_check_collision'] = function(b, g) { return [`d.getPixel(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0})`, 0]; };
+gen.forBlock['nb_clear_screen'] = function() { return `d.clearDisplay();\n`; };
+gen.forBlock['nb_if'] = function(b, g) { return `if (${g.valueToCode(b, 'COND', 0) || 'true'}) {\n${g.statementToCode(b, 'DO')}}\n`; };
+gen.forBlock['nb_set_val'] = function(b, g) { return `${b.getFieldValue('VAR')} = ${g.valueToCode(b, 'VAL', 0) || '0'};\n`; };
+gen.forBlock['nb_get_val'] = function(b) { return [b.getFieldValue('VAR'), 0]; };
+gen.forBlock['nb_math_val'] = function(b, g) { return [`(${g.valueToCode(b, 'A', 0) || '0'} ${b.getFieldValue('OP')} ${g.valueToCode(b, 'B', 0) || '0'})`, 0]; };
+gen.forBlock['nb_change_state'] = function(b, g) { return `estado = ${g.valueToCode(b, 'ID', 0) || '0'};\n`; };
+gen.forBlock['nb_text_raw'] = function(b) { return [`"${b.getFieldValue('TXT')}"`, 0]; };
+gen.forBlock['math_number'] = function(b) { return [b.getFieldValue('NUM'), 0]; };
+gen.forBlock['nb_draw_text'] = function(b, g) { return `d.setCursor(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}); d.print(${g.valueToCode(b, 'T', 0) || '""'});\n`; };
+
+const workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox'), theme: 'dark' });
+
+// --- GESTÃO DE ABAS CORRIGIDA ---
+function carregarProjeto(nome) {
+    projetos[projetoAtivo].xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+    projetoAtivo = nome;
+    workspace.clear();
+    Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(projetos[nome].xml), workspace);
+    renderList();
+}
+
+function novoProjeto() {
+    const n = document.getElementById('projName').value.trim();
+    
+    // Alertas de erro para você saber o que deu errado
+    if(!n) return alert("Digite um nome para a fase/jogo!");
+    if(projetos[n]) return alert("Já existe um projeto com esse nome!");
+    
+    // Cria usando o XML validado pelo Blockly
+    projetos[n] = { xml: emptyXML, id: Object.keys(projetos).length };
+    document.getElementById('projName').value = "";
+    
+    carregarProjeto(n);
+}
+
+function renderList() {
+    const l = document.getElementById('projectList'); 
+    l.innerHTML = "";
+    Object.keys(projetos).forEach(n => {
+        const d = document.createElement('div');
+        d.className = `project-item ${projetoAtivo === n ? 'project-active' : ''}`;
+        d.innerHTML = `${n} (ID ${projetos[n].id})`;
+        d.onclick = () => carregarProjeto(n);
+        l.appendChild(d);
+    });
+}
+
+function gerarCodigoOS() {
+    // Salva o estado atual da aba ativa antes de compilar
+    projetos[projetoAtivo].xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+
+    let code = `// NanoBoy Purist v18.1\n#include <Adafruit_SSD1306.h>\nAdafruit_SSD1306 d(128, 64, &Wire, -1);\nint estado = 0;\nint playerX=64, playerY=32;\n`;
+    
+    // Pega as variáveis manuais criadas no nb_set_val
+    let vars = new Set();
+    Object.keys(projetos).forEach(n => {
+        const tWS = new Blockly.Workspace();
+        Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(projetos[n].xml), tWS);
+        
+        // Coleta todas as variáveis usadas no projeto
+        tWS.getAllBlocks().forEach(b => {
+           if(b.type === 'nb_set_val' || b.type === 'nb_get_val') {
+               vars.add(b.getFieldValue('VAR'));
+           }
+        });
+        
+        tWS.dispose();
+    });
+    
+    // Declara as variáveis globais no topo do Arduino
+    vars.forEach(v => {
+        if(v !== "playerX" && v !== "playerY") code += `int ${v} = 0;\n`;
     });
 
-    // Função para trocar abas
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-      
-      workspace.clear(); // Limpa o workspace ao trocar aba
-      if (tab === 'jogos') {
-        workspace.updateToolbox(document.getElementById('toolbox-jogos'));
-      } else if (tab === 'levels') {
-        workspace.updateToolbox(document.getElementById('toolbox-levels'));
-      }
-    }
-
-    // Blocos customizados (adicionados mais lógica via Blockly padrão)
-    Blockly.Blocks['menu_iniciar'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Iniciar Menu");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(230);
-      }
-    };
-
-    Blockly.Blocks['menu_adicionar_opcao'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Adicionar Opção ao Menu");
-        this.appendDummyInput().appendField(new Blockly.FieldTextInput("Maze"), "OPCAO");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(230);
-      }
-    };
-
-    Blockly.Blocks['menu_selecionar'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Selecionar com Joystick");
-        this.setOutput(true, "String");
-        this.setColour(230);
-      }
-    };
-
-    Blockly.Blocks['maze_carregar_level'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Carregar Level de Maze");
-        this.appendDummyInput().appendField(new Blockly.FieldDropdown([["1", "1"], ["2", "2"], ["3", "3"]]), "LEVEL");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(160);
-      }
-    };
-
-    Blockly.Blocks['maze_mover_jogador'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Mover Jogador com Joystick");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(160);
-      }
-    };
-
-    Blockly.Blocks['maze_verificar_fim'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Verificar se Chegou no Fim");
-        this.setOutput(true, "Boolean");
-        this.setColour(160);
-      }
-    };
-
-    Blockly.Blocks['maze_desenhar'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Desenhar Maze no Display");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(160);
-      }
-    };
-
-    Blockly.Blocks['flappy_iniciar'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Iniciar Flappy Bird");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(100);
-      }
-    };
-
-    Blockly.Blocks['flappy_aplicar_gravidade'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Aplicar Gravidade ao Pássaro");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(100);
-      }
-    };
-
-    Blockly.Blocks['flappy_pular'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Pular com Botão do Joystick");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(100);
-      }
-    };
-
-    Blockly.Blocks['flappy_gerar_tubos'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Gerar e Mover Tubos");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(100);
-      }
-    };
-
-    Blockly.Blocks['flappy_contar_pontos'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Contar Pontos");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(100);
-      }
-    };
-
-    Blockly.Blocks['flappy_verificar_colisao'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Verificar Colisão");
-        this.setOutput(true, "Boolean");
-        this.setColour(100);
-      }
-    };
-
-    Blockly.Blocks['hardware_display_oled'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Inicializar Display OLED");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(65);
-      }
-    };
-
-    Blockly.Blocks['hardware_joystick_ler'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Ler Joystick");
-        this.setOutput(true, "Array");
-        this.setColour(65);
-      }
-    };
-
-    Blockly.Blocks['hardware_buzzer_tocar'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Tocar Buzzer");
-        this.appendValueInput("FREQUENCIA").setCheck("Number").appendField("Frequência");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(65);
-      }
-    };
-
-    // Blocos para Aba de Levels
-    Blockly.Blocks['level_definir_maze'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Definir Mapa do Maze Level");
-        this.appendDummyInput().appendField(new Blockly.FieldDropdown([["1", "1"], ["2", "2"], ["3", "3"]]), "LEVEL");
-        this.appendDummyInput().appendField(new Blockly.FieldMultilineInput("#@.............#\n#.####.####.#.#\n#.........#..#.\n#.####.#.##.#.#\n#......#....#.#\n#.####.####.#.*\n################"), "MAPA");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(120);
-      }
-    };
-
-    Blockly.Blocks['level_adicionar_obstaculo'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Adicionar Obstáculo no Maze");
-        this.appendValueInput("POS_X").setCheck("Number").appendField("Posição X");
-        this.appendValueInput("POS_Y").setCheck("Number").appendField("Posição Y");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(120);
-      }
-    };
-
-    Blockly.Blocks['level_definir_saida'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Definir Saída do Level");
-        this.appendValueInput("POS_X").setCheck("Number").appendField("Posição X");
-        this.appendValueInput("POS_Y").setCheck("Number").appendField("Posição Y");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(120);
-      }
-    };
-
-    // Geradores de código (adaptados para C++ Arduino)
-    Blockly.JavaScript['menu_iniciar'] = function(block) {
-      return 'display.clearDisplay();\ndisplay.setCursor(0,0);\ndisplay.println("Selecione Jogo:");\ndisplay.display();\n';
-    };
-
-    Blockly.JavaScript['menu_adicionar_opcao'] = function(block) {
-      var opcao = block.getFieldValue('OPCAO');
-      return 'display.println("' + opcao + '");\ndisplay.display();\n';
-    };
-
-    Blockly.JavaScript['menu_selecionar'] = function(block) {
-      return ['lerJoystick()', Blockly.JavaScript.ORDER_NONE];
-    };
-
-    Blockly.JavaScript['maze_carregar_level'] = function(block) {
-      var level = block.getFieldValue('LEVEL');
-      return 'initMaze(' + level + ');\n';
-    };
-
-    Blockly.JavaScript['maze_mover_jogador'] = function(block) {
-      return 'moverJogador();\n';
-    };
-
-    Blockly.JavaScript['maze_verificar_fim'] = function(block) {
-      return ['chegouFim()', Blockly.JavaScript.ORDER_NONE];
-    };
-
-    Blockly.JavaScript['maze_desenhar'] = function(block) {
-      return 'drawMaze();\n';
-    };
-
-    Blockly.JavaScript['flappy_iniciar'] = function(block) {
-      return 'initFlappy();\n';
-    };
-
-    Blockly.JavaScript['flappy_aplicar_gravidade'] = function(block) {
-      return 'birdVelocity += 1;\nbirdY += birdVelocity;\n';
-    };
-
-    Blockly.JavaScript['flappy_pular'] = function(block) {
-      return 'if (digitalRead(JOY_BTN) == LOW) { birdVelocity = -5; }\n';
-    };
-
-    Blockly.JavaScript['flappy_gerar_tubos'] = function(block) {
-      return 'pipeX -= 2;\nif (pipeX < -20) { pipeX = 128; pipeGapY = random(10, 30); score++; }\n';
-    };
-
-    Blockly.JavaScript['flappy_contar_pontos'] = function(block) {
-      return 'display.setCursor(100, 0);\ndisplay.print(score);\n';
-    };
-
-    Blockly.JavaScript['flappy_verificar_colisao'] = function(block) {
-      return ['colidiu()', Blockly.JavaScript.ORDER_NONE];
-    };
-
-    Blockly.JavaScript['hardware_display_oled'] = function(block) {
-      return 'display.begin(SSD1306_SWITCHCAPVCC, 0x3C);\n';
-    };
-
-    Blockly.JavaScript['hardware_joystick_ler'] = function(block) {
-      return ['analogRead(JOY_X), analogRead(JOY_Y)', Blockly.JavaScript.ORDER_NONE];
-    };
-
-    Blockly.JavaScript['hardware_buzzer_tocar'] = function(block) {
-      var freq = Blockly.JavaScript.valueToCode(block, 'FREQUENCIA', Blockly.JavaScript.ORDER_ATOMIC);
-      return 'tone(BUZZER, ' + freq + ', 200);\n';
-    };
-
-    Blockly.JavaScript['level_definir_maze'] = function(block) {
-      var level = block.getFieldValue('LEVEL');
-      var mapa = block.getFieldValue('MAPA').replace(/\n/g, '\\n');
-      return 'char mazeLevel' + level + '[] = "' + mapa + '";\n';
-    };
-
-    Blockly.JavaScript['level_adicionar_obstaculo'] = function(block) {
-      var pos_x = Blockly.JavaScript.valueToCode(block, 'POS_X', Blockly.JavaScript.ORDER_ATOMIC);
-      var pos_y = Blockly.JavaScript.valueToCode(block, 'POS_Y', Blockly.JavaScript.ORDER_ATOMIC);
-      return 'currentMaze[' + pos_y + '][' + pos_x + '] = \'#\';\n';
-    };
-
-    Blockly.JavaScript['level_definir_saida'] = function(block) {
-      var pos_x = Blockly.JavaScript.valueToCode(block, 'POS_X', Blockly.JavaScript.ORDER_ATOMIC);
-      var pos_y = Blockly.JavaScript.valueToCode(block, 'POS_Y', Blockly.JavaScript.ORDER_ATOMIC);
-      return 'currentMaze[' + pos_y + '][' + pos_x + '] = \'*\';\n';
-    };
-
-    // Função para gerar código
-    function gerarCodigo() {
-      var code = Blockly.JavaScript.workspaceToCode(workspace);
-      var fullCode = '#include <Adafruit_GFX.h>\n#include <Adafruit_SSD1306.h>\n#include <Wire.h>\n\n// Definições de hardware...\nAdafruit_SSD1306 display(128, 64, &Wire, -1);\n\n// Variáveis globais...\n\nvoid setup() {\n  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);\n  display.clearDisplay();\n}\n\nvoid loop() {\n' + code + '\n}\n\n// Funções auxiliares como initMaze, drawMaze, etc. (adicione manualmente no código final)';
-      document.getElementById('code').value = fullCode;
-    }
-  </script>
-  
-  <p>Nota: Agora com abas separadas! Na aba "Levels", defina mapas do maze com texto multilinha (use # para paredes, . para vazio, @ para start, * para exit). Adicione mais lógica com os novos blocos. O código gerado é base; complete funções no Arduino IDE. Para hardware: OLED, Joystick, Buzzer.</p>
+    let funcs = "";
+    Object.keys(projetos).forEach(n => {
+        const tWS = new Blockly.Workspace();
+        Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(projetos[n].xml), tWS);
+        const c = gen.workspaceToCode(tWS);
+        funcs += `void rodar_${n.replace(/\s/g,'_')}() {\n${c}\n}\n\n`;
+        tWS.dispose();
+    });
+    
+    code += `\nvoid setup() {\n d.begin(SSD1306_SWITCHCAPVCC, 0x3C);\n d.setTextColor(WHITE);\n pinMode(2, INPUT_PULLUP);\n pinMode(3, INPUT_PULLUP);\n pinMode(4, INPUT_PULLUP);\n}\n\n${funcs}`;
+    code += `void loop() {\n d.clearDisplay();\n switch(estado) {\n`;
+    Object.keys(projetos).forEach(n => code += `  case ${projetos[n].id}: rodar_${n.replace(/\s/g,'_')}(); break;\n`);
+    code += ` }\n d.display();\n delay(20);\n}`;
+    document.getElementById('outputCode').value = code;
+}
+renderList();
+</script>
 </body>
 </html>
