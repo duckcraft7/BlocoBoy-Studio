@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>NanoBoy Universal Maker v7</title>
+  <title>NanoBoy Engine v8 - Gerador Pro</title>
   
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed"></script>
@@ -19,7 +19,7 @@
     #blocklyDiv { flex: 3; }
     
     #codeSide { flex: 1.2; background: #181818; padding: 20px; display: flex; flex-direction: column; border-left: 2px solid #333; }
-    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; padding: 15px; border: 1px solid #444; border-radius: 4px; resize: none; outline: none; line-height: 1.4; }
+    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 12px; padding: 15px; border: 1px solid #444; border-radius: 4px; resize: none; outline: none; line-height: 1.4; }
     
     .btn-group { display: flex; gap: 10px; }
     .btn { background: var(--main); color: black; border: none; padding: 10px 18px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 12px; transition: 0.3s; text-transform: uppercase; }
@@ -32,8 +32,8 @@
 
 <header>
   <div style="display:flex; align-items:center; gap:12px;">
-    <span style="font-size: 28px;">🎮</span>
-    <h2 style="margin:0; font-size: 20px; letter-spacing: 1px;">NanoBoy Maker</h2>
+    <span style="font-size: 28px;">🕹️</span>
+    <h2 style="margin:0; font-size: 20px; letter-spacing: 1px;">NanoBoy Engine</h2>
   </div>
   <div class="btn-group">
     <button class="btn btn-sec" onclick="salvarProjeto()">💾 Salvar</button>
@@ -45,8 +45,8 @@
 <div class="container">
   <div id="blocklyDiv"></div>
   <div id="codeSide">
-    <h3>📄 CÓDIGO FINAL (ARDUINO NANO)</h3>
-    <textarea id="outputCode" readonly placeholder="Monte seu jogo e clique em Gerar..."></textarea>
+    <h3>📄 CÓDIGO ARDUINO (PRONTO PARA O WOKWI)</h3>
+    <textarea id="outputCode" readonly placeholder="Monte sua lógica e clique em Gerar..."></textarea>
   </div>
 </div>
 
@@ -70,7 +70,7 @@
     <block type="text"></block>
   </category>
   <sep></sep>
-  <category name="🕹️ NanoBoy Hardware" colour="160">
+  <category name="👾 NanoBoy" colour="160">
     <block type="nano_draw_rect"></block>
     <block type="nano_draw_text"></block>
     <block type="nano_btn_pressed"></block>
@@ -79,7 +79,7 @@
 </xml>
 
 <script>
-// --- 1. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS ---
+// --- 1. DEFINIÇÃO DOS BLOCOS ---
 Blockly.defineBlocksWithJsonArray([
   { "type": "nano_draw_rect", "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
   { "type": "nano_draw_text", "message0": "Escrever %1 em X: %2 Y: %3", "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
@@ -87,16 +87,23 @@ Blockly.defineBlocksWithJsonArray([
   { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 }
 ]);
 
-// --- 2. CONFIGURAÇÃO DO GERADOR C++ (CORREÇÃO DE NOMES E VARS) ---
+// --- 2. CONFIGURAÇÃO DO GERADOR (TRADUTOR C++ LIMPO) ---
 const generator = javascript.javascriptGenerator;
 
-// Impedir o mangling (nomes estranhos) das variáveis
+// Desativa a declaração automática de variáveis do Blockly (evita o 'var')
+generator.init = function(workspace) {
+  generator.nameDB_ = new Blockly.Names(generator.variableDB_ ? generator.variableDB_.getNameType() : '');
+  generator.nameDB_.setVariableMap(workspace.getVariableMap());
+};
+
+// Tradutor de busca de variável: retorna apenas o nome puro
 generator.forBlock['variables_get'] = function(block) {
   const varId = block.getFieldValue('VAR');
   const varName = workspace.getVariableById(varId).name;
   return [varName, 0];
 };
 
+// Tradutor de definição de variável: retorna "nome = valor;"
 generator.forBlock['variables_set'] = function(block, gen) {
   const varId = block.getFieldValue('VAR');
   const varName = workspace.getVariableById(varId).name;
@@ -104,10 +111,12 @@ generator.forBlock['variables_set'] = function(block, gen) {
   return varName + ' = ' + val + ';\n';
 };
 
+// Tradutor de Texto
 generator.forBlock['text'] = function(block) {
   return ["\"" + block.getFieldValue('TEXT') + "\"", 0];
 };
 
+// Blocos de Hardware
 generator.forBlock['nano_draw_rect'] = function(block, gen) {
   const x = gen.valueToCode(block, 'X', 0) || '0';
   const y = gen.valueToCode(block, 'Y', 0) || '0';
@@ -140,20 +149,20 @@ const workspace = Blockly.inject('blocklyDiv', {
 
 // --- 4. FUNÇÃO DE EXPORTAÇÃO ---
 function exportarCodigo() {
+  // Pega as variáveis e cria as declarações globais no topo
   const vars = workspace.getAllVariables();
-  // Declara variáveis no topo como INT
   let declaracoes = vars.map(v => `int ${v.name} = 0;`).join('\n');
   
-  // Gera o código dos blocos (sem var/typeof)
+  // Gera a lógica interna dos blocos
   let blockCode = generator.workspaceToCode(workspace);
   
-  const template = `// Gerado por NanoBoy Engine
+  const template = `// Gerado por NanoBoy Engine v8
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
 
-// --- VARIÁVEIS DO JOGO ---
+// --- VARIÁVEIS GLOBAIS ---
 ${declaracoes}
 
 void setup() {
@@ -170,7 +179,7 @@ void loop() {
   
   // --- LÓGICA DO JOGO ---
 ${blockCode}
-  // --- FIM DA LÓGICA ---
+  // ----------------------
 
   d.display();
   delay(20);
@@ -179,13 +188,13 @@ ${blockCode}
   document.getElementById('outputCode').value = template;
 }
 
-// --- 5. SISTEMA DE SAVE/LOAD ---
+// --- 5. SAVE / LOAD ---
 function salvarProjeto() {
   const xml = Blockly.Xml.workspaceToDom(workspace);
   const blob = new Blob([Blockly.Xml.domToPrettyText(xml)], {type: "text/xml"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "meujogo_nanoboy.xml";
+  a.download = "jogo_nanoboy.xml";
   a.click();
 }
 
