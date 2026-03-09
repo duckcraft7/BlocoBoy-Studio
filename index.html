@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>NanoBoy Universal Maker</title>
+  <title>NanoBoy Universal Maker v6</title>
   
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed"></script>
@@ -13,37 +13,39 @@
     :root { --main: #00ff88; --bg: #121212; --panel: #1e1e1e; }
     body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     
-    header { background: var(--panel); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
     
     .container { display: flex; flex: 1; overflow: hidden; }
     #blocklyDiv { flex: 3; }
     
     #codeSide { flex: 1; background: #181818; padding: 20px; display: flex; flex-direction: column; border-left: 2px solid #333; }
-    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; padding: 15px; border: 1px solid #444; border-radius: 4px; resize: none; outline: none; line-height: 1.5; }
+    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 11px; padding: 15px; border: 1px solid #444; border-radius: 4px; resize: none; outline: none; }
     
-    .btn { background: var(--main); color: black; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; border-radius: 5px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-    .btn:hover { background: #00cc6e; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,136,0.3); }
-    
-    h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--main); text-transform: uppercase; }
+    .btn-group { display: flex; gap: 8px; }
+    .btn { background: var(--main); color: black; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 12px; }
+    .btn-sec { background: #444; color: white; }
+    h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--main); }
   </style>
 </head>
 <body>
 
 <header>
-  <div style="display:flex; align-items:center; gap:12px;">
-    <span style="font-size: 28px;">🕹️</span>
-    <h2 style="margin:0; letter-spacing: 1px;">NanoBoy Universal</h2>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span style="font-size: 24px;">🕹️</span>
+    <h2 style="margin:0; font-size: 18px;">NanoBoy Maker</h2>
   </div>
-  <button class="btn" onclick="exportarCodigo()">Gerar Código Arduino</button>
+  <div class="btn-group">
+    <button class="btn btn-sec" onclick="salvarProjeto()">💾 Salvar</button>
+    <button class="btn btn-sec" onclick="abrirProjeto()">📂 Abrir</button>
+    <button class="btn" onclick="exportarCodigo()">🚀 Gerar Código</button>
+  </div>
 </header>
 
 <div class="container">
   <div id="blocklyDiv"></div>
-
   <div id="codeSide">
-    <h3>📄 Saída C++ (Arduino Nano)</h3>
-    <textarea id="outputCode" readonly placeholder="Monte seu jogo e clique em Gerar..."></textarea>
-    <p style="font-size: 11px; color: #666; margin-top: 10px;">Dica: No Wokwi, conecte o Display nos pinos A4 (SDA) e A5 (SCL).</p>
+    <h3>📄 Saída C++</h3>
+    <textarea id="outputCode" readonly placeholder="Monte sua lógica e gere o código..."></textarea>
   </div>
 </div>
 
@@ -62,6 +64,9 @@
   <category name="Matemática" colour="230">
     <block type="math_number"></block>
     <block type="math_arithmetic"></block>
+  </category>
+  <category name="Texto" colour="160">
+    <block type="text"></block>
   </category>
   <sep></sep>
   <category name="👾 NanoBoy" colour="160">
@@ -73,270 +78,51 @@
 </xml>
 
 <script>
-// --- 1. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS ---
+// --- 1. DEFINIÇÃO DOS BLOCOS ---
 Blockly.defineBlocksWithJsonArray([
-  {
-    "type": "nano_draw_rect",
-    "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4",
-    "args0": [
-      { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" },
-      { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }
-    ],
-    "previousStatement": null, "nextStatement": null, "colour": 160
-  },
-  {
-    "type": "nano_draw_text",
-    "message0": "Texto %1 em X: %2 Y: %3",
-    "args0": [
-      { "type": "input_value", "name": "TXT" },
-      { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }
-    ],
-    "previousStatement": null, "nextStatement": null, "colour": 160
-  },
-  {
-    "type": "nano_btn_pressed",
-    "message0": "Botão %1 pressionado?",
-    "args0": [
-      { "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esquerda (D3)", "3"], ["Direita (D4)", "4"]] }
-    ],
-    "output": "Boolean", "colour": 160
-  },
-  {
-    "type": "nano_clear",
-    "message0": "Limpar Tela",
-    "previousStatement": null, "nextStatement": null, "colour": 160
-  }
+  { "type": "nano_draw_rect", "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nano_draw_text", "message0": "Texto %1 em X: %2 Y: %3", "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nano_btn_pressed", "message0": "Botão %1 pressionado?", "args0": [{ "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esq (D3)", "3"], ["Dir (D4)", "4"]] }], "output": "Boolean", "colour": 160 },
+  { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 }
 ]);
 
-// --- 2. CONFIGURAÇÃO DO GERADOR (CORRIGINDO VAR E TYPEOF) ---
+// --- 2. CONFIGURAÇÃO DO GERADOR ---
 const generator = javascript.javascriptGenerator;
 
-// Forçar variáveis a serem simples (sem typeof)
-generator.forBlock['variables_get'] = function(block) {
-  return [block.getFieldValue('VAR'), 0];
+generator.forBlock['text'] = function(block) {
+  return ["\"" + block.getFieldValue('TEXT') + "\"", 0];
 };
 
+generator.forBlock['variables_get'] = function(block) { return [block.getFieldValue('VAR'), 0]; };
 generator.forBlock['variables_set'] = function(block, gen) {
-  var argument0 = gen.valueToCode(block, 'VALUE', 0) || '0';
-  var varName = block.getFieldValue('VAR');
-  return varName + ' = ' + argument0 + ';\n';
+  var val = gen.valueToCode(block, 'VALUE', 0) || '0';
+  return block.getFieldValue('VAR') + ' = ' + val + ';\n';
 };
 
-// Blocos de Hardware
 generator.forBlock['nano_draw_rect'] = function(block, gen) {
-  var x = gen.valueToCode(block, 'X', 0) || '0';
-  var y = gen.valueToCode(block, 'Y', 0) || '0';
-  var w = gen.valueToCode(block, 'W', 0) || '4';
-  var h = gen.valueToCode(block, 'H', 0) || '4';
-  return `d.fillRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
+  return `d.fillRect(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}, ${gen.valueToCode(block, 'W', 0) || 4}, ${gen.valueToCode(block, 'H', 0) || 4}, WHITE);\n`;
 };
 
 generator.forBlock['nano_draw_text'] = function(block, gen) {
-  var txt = gen.valueToCode(block, 'TXT', 0) || '" "';
-  var x = gen.valueToCode(block, 'X', 0) || '0';
-  var y = gen.valueToCode(block, 'Y', 0) || '0';
-  return `d.setCursor(${x}, ${y}); d.print(${txt});\n`;
+  return `d.setCursor(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}); d.print(${gen.valueToCode(block, 'TXT', 0) || '""'});\n`;
 };
 
-generator.forBlock['nano_btn_pressed'] = function(block) {
-  var pin = block.getFieldValue('PIN');
-  return [`(digitalRead(${pin}) == LOW)`, 0];
-};
-
-generator.forBlock['nano_clear'] = function() {
-  return `d.clearDisplay();\n`;
-};
+generator.forBlock['nano_btn_pressed'] = function(block) { return [`(digitalRead(${block.getFieldValue('PIN')}) == LOW)`, 0]; };
+generator.forBlock['nano_clear'] = function() { return `d.clearDisplay();\n`; };
 
 // --- 3. INICIALIZAÇÃO ---
-const workspace = Blockly.inject('blocklyDiv', {
-  toolbox: document.getElementById('toolbox'),
-  theme: 'dark',
-  grid: { spacing: 20, length: 3, colour: '#333', snap: true },
-  zoom: { controls: true, wheel: true, startScale: 1.0, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2 }
-});
+const workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox'), theme: 'dark' });
 
-// --- 4. FUNÇÃO PARA GERAR C++ LIMPO ---
 function exportarCodigo() {
-  // Pega todos os nomes de variáveis criados pelo usuário
   const vars = workspace.getAllVariables();
-  let declaracoes = "";
-  vars.forEach(v => {
-    declaracoes += `int ${v.name} = 0;\n`;
-  });
-
-  // Gera a lógica dos blocos
-  const blockCode = generator.workspaceToCode(workspace);
+  let vDecl = vars.map(v => `int ${v.name} = 0;`).join('\n');
+  const code = generator.workspaceToCode(workspace);
   
-  // Template Final do Arduino
-  const finalTemplate = `// Código Gerado pelo NanoBoy Universal
-#include <Adafruit_SSD1306.h>
-#include <Wire.h>
-
-Adafruit_SSD1306 d(128, 64, &Wire, -1);
-
-// Variáveis do Jogo
-${declaracoes}
-
-void setup() {
-  d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  d.setTextColor(WHITE);
-  d.setTextSize(1);
-  
-  pinMode(2, INPUT_PULLUP);
-  pinMode(3, INPUT_PULLUP);
-  pinMode(4, INPUT_PULLUP);
-}
-
-void loop() {
-  d.clearDisplay();
-  
-  // --- INÍCIO DA LÓGICA DO USUÁRIO ---
-${blockCode}
-  // --- FIM DA LÓGICA DO USUÁRIO ---
-
-  d.display();
-  delay(20);
-}
-`;
-  
-  document.getElementById('outputCode').value = finalTemplate;
-}
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>NanoBoy Maker - Engine de Jogos</title>
-  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-  <script src="https://unpkg.com/blockly/blocks_compressed"></script>
-  <script src="https://unpkg.com/blockly/javascript_compressed"></script>
-  <script src="https://unpkg.com/blockly/msg/pt-br.js"></script>
-
-  <style>
-    :root { --main: #00ff88; --bg: #121212; }
-    body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    header { background: #1e1e1e; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
-    .container { display: flex; flex: 1; }
-    #blocklyDiv { flex: 3; }
-    #codeSide { flex: 1; background: #181818; padding: 20px; display: flex; flex-direction: column; border-left: 2px solid #333; }
-    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 12px; padding: 15px; border: 1px solid #444; margin-top: 10px; border-radius: 4px; resize: none; }
-    .btn { background: var(--main); color: black; border: none; padding: 12px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; transition: 0.2s; }
-    .btn:hover { background: #00cc6e; transform: scale(1.05); }
-    h3 { margin: 0; font-size: 16px; color: var(--main); }
-  </style>
-</head>
-<body>
-
-<header>
-  <div style="display:flex; align-items:center; gap:10px;">
-    <span style="font-size: 24px;">🕹️</span>
-    <h2 style="margin:0">NanoBoy Universal</h2>
-  </div>
-  <button class="btn" onclick="exportarCodigo()">GERAR C++ PARA ARDUINO</button>
-</header>
-
-<div class="container">
-  <div id="blocklyDiv"></div>
-  <div id="codeSide">
-    <h3>📄 Código do Game</h3>
-    <textarea id="outputCode" readonly placeholder="O código C++ aparecerá aqui após clicar em Gerar..."></textarea>
-    <p style="font-size: 11px; color: #888; margin-top: 10px;">Copie este código e cole no seu projeto do Wokwi!</p>
-  </div>
-</div>
-
-<xml id="toolbox" style="display: none">
-  <category name="Lógica" colour="210">
-    <block type="controls_if"></block>
-    <block type="logic_compare"></block>
-    <block type="logic_operation"></block>
-    <block type="logic_boolean"></block>
-  </category>
-  <category name="Loops" colour="120">
-    <block type="controls_repeat_ext"></block>
-    <block type="controls_whileUntil"></block>
-  </category>
-  <category name="Variáveis" colour="330" custom="VARIABLE"></category>
-  <category name="Matemática" colour="230">
-    <block type="math_number"></block>
-    <block type="math_arithmetic"></block>
-  </category>
-  <sep></sep>
-  <category name="👾 NanoBoy" colour="160">
-    <block type="nano_draw_rect"></block>
-    <block type="nano_btn_pressed"></block>
-    <block type="nano_draw_text"></block>
-  </category>
-</xml>
-
-<script>
-// --- 1. DEFINIÇÃO DOS BLOCOS (JSON) ---
-Blockly.defineBlocksWithJsonArray([
-  {
-    "type": "nano_draw_rect",
-    "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4",
-    "args0": [
-      { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" },
-      { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }
-    ],
-    "previousStatement": null, "nextStatement": null, "colour": 160
-  },
-  {
-    "type": "nano_draw_text",
-    "message0": "Escrever %1 em X: %2 Y: %3",
-    "args0": [
-      { "type": "input_value", "name": "TXT" },
-      { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }
-    ],
-    "previousStatement": null, "nextStatement": null, "colour": 160
-  },
-  {
-    "type": "nano_btn_pressed",
-    "message0": "Botão %1 pressionado?",
-    "args0": [
-      { "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esquerda (D3)", "3"], ["Direita (D4)", "4"]] }
-    ],
-    "output": "Boolean", "colour": 160
-  }
-]);
-
-// --- 2. TRADUTORES (Ensinando o Blockly a falar C++) ---
-javascript.javascriptGenerator.forBlock['nano_draw_rect'] = function(block, generator) {
-  var x = generator.valueToCode(block, 'X', 0) || '0';
-  var y = generator.valueToCode(block, 'Y', 0) || '0';
-  var w = generator.valueToCode(block, 'W', 0) || '4';
-  var h = generator.valueToCode(block, 'H', 0) || '4';
-  return `d.fillRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
-};
-
-javascript.javascriptGenerator.forBlock['nano_draw_text'] = function(block, generator) {
-  var txt = generator.valueToCode(block, 'TXT', 0) || '" "';
-  var x = generator.valueToCode(block, 'X', 0) || '0';
-  var y = generator.valueToCode(block, 'Y', 0) || '0';
-  return `d.setCursor(${x}, ${y}); d.print(${txt});\n`;
-};
-
-javascript.javascriptGenerator.forBlock['nano_btn_pressed'] = function(block) {
-  var pin = block.getFieldValue('PIN');
-  return [`(digitalRead(${pin}) == LOW)`, 0];
-};
-
-// --- 3. INICIALIZAR O EDITOR ---
-const workspace = Blockly.inject('blocklyDiv', {
-  toolbox: document.getElementById('toolbox'),
-  theme: 'dark',
-  grid: { spacing: 20, length: 3, colour: '#333', snap: true }
-});
-
-// --- 4. FUNÇÃO GERAR ---
-function exportarCodigo() {
-  // Gera o código a partir dos blocos
-  const blockCode = javascript.javascriptGenerator.workspaceToCode(workspace);
-  
-  // Cria o template do Arduino
-  const finalTemplate = `// Código Gerado pelo NanoBoy Universal
+  document.getElementById('outputCode').value = `
 #include <Adafruit_SSD1306.h>
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
+
+${vDecl}
 
 void setup() {
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
@@ -348,17 +134,37 @@ void setup() {
 
 void loop() {
   d.clearDisplay();
-  
-  // --- INÍCIO DA LÓGICA DOS BLOCOS ---
-${blockCode}
-  // --- FIM DA LÓGICA ---
-
+  ${code}
   d.display();
   delay(20);
+}`;
 }
-`;
-  
-  document.getElementById('outputCode').value = finalTemplate;
+
+// --- 4. FUNÇÕES DE SAVE/LOAD ---
+function salvarProjeto() {
+  const xml = Blockly.Xml.workspaceToDom(workspace);
+  const xmlText = Blockly.Xml.domToPrettyText(xml);
+  const blob = new Blob([xmlText], {type: "text/xml"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "projeto_nanoboy.xml";
+  a.click();
+}
+
+function abrirProjeto() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+      const xml = Blockly.utils.xml.textToDom(e.target.result);
+      workspace.clear();
+      Blockly.Xml.domToWorkspace(xml, workspace);
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 </script>
 </body>
