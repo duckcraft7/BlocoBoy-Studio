@@ -1,145 +1,307 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-
-<title>Arduino Game Maker</title>
-<script src="https://unpkg.com/blockly/blockly.min.js"></script>
-
-<style>
-
-body{
-font-family:Arial;
-margin:0;
-display:flex;
-height:100vh;
-}
-
-#games{
-width:200px;
-background:#222;
-color:white;
-padding:10px;
-}
-
-#blocklyDiv{
-flex:1;
-height:100%;
-}
-
-button{
-width:100%;
-margin-top:5px;
-}
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Creator para Arduino Nano - Como Scratch</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    #blocklyDiv { height: 480px; width: 100%; border: 1px solid #ccc; }
+    #code { width: 100%; height: 300px; font-family: monospace; }
+    button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background: #45a049; }
+  </style>
+  <!-- Blockly scripts via UNPKG CDN -->
+  <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/javascript_compressed.js"></script> <!-- Para geração de código, mas adaptaremos para C++ -->
+  <script src="https://unpkg.com/blockly/msg/pt-br.js"></script> <!-- Mensagens em português -->
 </head>
-
 <body>
+  <h1>Crie Jogos para Arduino Nano com Blocos Visuais</h1>
+  <p>Arraste blocos para criar menu, jogos como Maze (com levels) e Flappy Bird (infinito). Clique em "Gerar Código" para obter o código Arduino. Cole no Arduino IDE e upload para o Nano. Use simuladores como Wokwi.com para testar.</p>
+  
+  <div id="blocklyDiv"></div>
+  
+  <xml id="toolbox" style="display: none">
+    <category name="Menu">
+      <block type="menu_iniciar"></block>
+      <block type="menu_adicionar_opcao"></block>
+      <block type="menu_selecionar"></block>
+    </category>
+    <category name="Maze">
+      <block type="maze_carregar_level">
+        <field name="LEVEL">1</field>
+      </block>
+      <block type="maze_mover_jogador"></block>
+      <block type="maze_verificar_fim"></block>
+      <block type="maze_desenhar"></block>
+    </category>
+    <category name="Flappy Bird">
+      <block type="flappy_iniciar"></block>
+      <block type="flappy_aplicar_gravidade"></block>
+      <block type="flappy_pular"></block>
+      <block type="flappy_gerar_tubos"></block>
+      <block type="flappy_contar_pontos"></block>
+      <block type="flappy_verificar_colisao"></block>
+    </category>
+    <category name="Controle">
+      <block type="controls_if"></block>
+      <block type="controls_repeat_ext">
+        <value name="TIMES">
+          <shadow type="math_number">
+            <field name="NUM">10</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="controls_whileUntil"></block>
+    </category>
+    <category name="Hardware">
+      <block type="hardware_display_oled"></block>
+      <block type="hardware_joystick_ler"></block>
+      <block type="hardware_buzzer_tocar"></block>
+    </category>
+    <category name="Variáveis">
+      <block type="variables_get"></block>
+      <block type="variables_set"></block>
+    </category>
+    <category name="Matemática">
+      <block type="math_number"></block>
+      <block type="math_arithmetic"></block>
+    </category>
+  </xml>
+  
+  <button onclick="gerarCodigo()">Gerar Código Arduino</button>
+  <textarea id="code" readonly></textarea>
+  
+  <script>
+    // Injetar workspace
+    var workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox'),
+      zoom: { controls: true, wheel: true, startScale: 1.0 },
+      media: 'https://unpkg.com/blockly/media/'
+    });
 
-<div id="games">
+    // Definir blocos customizados
+    Blockly.Blocks['menu_iniciar'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Iniciar Menu");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(230);
+      }
+    };
 
-<h3>Jogos</h3>
+    Blockly.Blocks['menu_adicionar_opcao'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Adicionar Opção ao Menu");
+        this.appendDummyInput().appendField(new Blockly.FieldTextInput("Maze"), "OPCAO");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(230);
+      }
+    };
 
-<div id="lista"></div>
+    Blockly.Blocks['menu_selecionar'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Selecionar com Joystick");
+        this.setOutput(true, "String");
+        this.setColour(230);
+      }
+    };
 
-<button onclick="novoJogo()">Novo jogo</button>
-<button onclick="novoLevel()">Novo level</button>
-<button onclick="gerar()">Gerar código</button>
+    Blockly.Blocks['maze_carregar_level'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Carregar Level de Maze");
+        this.appendDummyInput().appendField(new Blockly.FieldDropdown([["1", "1"], ["2", "2"]]), "LEVEL");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(160);
+      }
+    };
 
-</div>
+    Blockly.Blocks['maze_mover_jogador'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Mover Jogador com Joystick");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(160);
+      }
+    };
 
-<div id="blocklyDiv"></div>
+    Blockly.Blocks['maze_verificar_fim'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Verificar se Chegou no Fim");
+        this.setOutput(true, "Boolean");
+        this.setColour(160);
+      }
+    };
 
-<xml id="toolbox" style="display:none">
+    Blockly.Blocks['maze_desenhar'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Desenhar Maze no Display");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(160);
+      }
+    };
 
-<category name="Jogo">
-<block type="controls_if"></block>
-<block type="controls_repeat_ext"></block>
-</category>
+    Blockly.Blocks['flappy_iniciar'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Iniciar Flappy Bird");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(100);
+      }
+    };
 
-<category name="Matemática">
-<block type="math_number"></block>
-</category>
+    Blockly.Blocks['flappy_aplicar_gravidade'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Aplicar Gravidade ao Pássaro");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(100);
+      }
+    };
 
-</xml>
+    Blockly.Blocks['flappy_pular'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Pular com Botão do Joystick");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(100);
+      }
+    };
 
-<script>
+    Blockly.Blocks['flappy_gerar_tubos'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Gerar e Mover Tubos");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(100);
+      }
+    };
 
-var workspace = Blockly.inject('blocklyDiv',{
-toolbox: document.getElementById('toolbox')
-});
+    Blockly.Blocks['flappy_contar_pontos'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Contar Pontos");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(100);
+      }
+    };
 
-let jogos=[];
-let atual=null;
+    Blockly.Blocks['flappy_verificar_colisao'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Verificar Colisão");
+        this.setOutput(true, "Boolean");
+        this.setColour(100);
+      }
+    };
 
-function novoJogo(){
+    Blockly.Blocks['hardware_display_oled'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Inicializar Display OLED");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65);
+      }
+    };
 
-let nome=prompt("Nome do jogo");
+    Blockly.Blocks['hardware_joystick_ler'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Ler Joystick");
+        this.setOutput(true, "Array");
+        this.setColour(65);
+      }
+    };
 
-jogos.push({
-nome:nome,
-levels:[]
-});
+    Blockly.Blocks['hardware_buzzer_tocar'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Tocar Buzzer");
+        this.appendValueInput("FREQUENCIA").setCheck("Number").appendField("Frequência");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65);
+      }
+    };
 
-atual=jogos.length-1;
+    // Gerador de código (adaptado para C++ Arduino)
+    Blockly.JavaScript['menu_iniciar'] = function(block) {
+      return 'display.clearDisplay();\ndisplay.setCursor(0,0);\ndisplay.println("Selecione Jogo:");\ndisplay.display();\n';
+    };
 
-update();
+    Blockly.JavaScript['menu_adicionar_opcao'] = function(block) {
+      var opcao = block.getFieldValue('OPCAO');
+      return 'display.println("' + opcao + '");\ndisplay.display();\n';
+    };
 
-}
+    Blockly.JavaScript['menu_selecionar'] = function(block) {
+      return ['lerJoystick()', Blockly.JavaScript.ORDER_NONE];
+    };
 
-function novoLevel(){
+    Blockly.JavaScript['maze_carregar_level'] = function(block) {
+      var level = block.getFieldValue('LEVEL');
+      return 'initMaze(' + level + ');\n';
+    };
 
-if(atual==null)return;
+    Blockly.JavaScript['maze_mover_jogador'] = function(block) {
+      return 'moverJogador();\n';
+    };
 
-let nome=prompt("Nome do level");
+    Blockly.JavaScript['maze_verificar_fim'] = function(block) {
+      return ['chegouFim()', Blockly.JavaScript.ORDER_NONE];
+    };
 
-jogos[atual].levels.push(nome);
+    Blockly.JavaScript['maze_desenhar'] = function(block) {
+      return 'drawMaze();\n';
+    };
 
-update();
+    Blockly.JavaScript['flappy_iniciar'] = function(block) {
+      return 'initFlappy();\n';
+    };
 
-}
+    Blockly.JavaScript['flappy_aplicar_gravidade'] = function(block) {
+      return 'birdVelocity += 1;\nbirdY += birdVelocity;\n';
+    };
 
-function update(){
+    Blockly.JavaScript['flappy_pular'] = function(block) {
+      return 'if (digitalRead(JOY_BTN) == LOW) { birdVelocity = -5; }\n';
+    };
 
-let div=document.getElementById("lista");
+    Blockly.JavaScript['flappy_gerar_tubos'] = function(block) {
+      return 'pipeX -= 2;\nif (pipeX < -20) { pipeX = 128; pipeGapY = random(10, 30); score++; }\n';
+    };
 
-div.innerHTML="";
+    Blockly.JavaScript['flappy_contar_pontos'] = function(block) {
+      return 'display.setCursor(100, 0);\ndisplay.print(score);\n';
+    };
 
-jogos.forEach((g,i)=>{
+    Blockly.JavaScript['flappy_verificar_colisao'] = function(block) {
+      return ['colidiu()', Blockly.JavaScript.ORDER_NONE];
+    };
 
-let e=document.createElement("div");
+    Blockly.JavaScript['hardware_display_oled'] = function(block) {
+      return 'display.begin(SSD1306_SWITCHCAPVCC, 0x3C);\n';
+    };
 
-e.innerText=g.nome;
+    Blockly.JavaScript['hardware_joystick_ler'] = function(block) {
+      return ['analogRead(JOY_X), analogRead(JOY_Y)', Blockly.JavaScript.ORDER_NONE];
+    };
 
-e.onclick=()=>{atual=i};
+    Blockly.JavaScript['hardware_buzzer_tocar'] = function(block) {
+      var freq = Blockly.JavaScript.valueToCode(block, 'FREQUENCIA', Blockly.JavaScript.ORDER_ATOMIC);
+      return 'tone(BUZZER, ' + freq + ', 200);\n';
+    };
 
-div.appendChild(e);
-
-});
-
-}
-
-function gerar(){
-
-let codigo="";
-
-jogos.forEach((g,i)=>{
-
-g.levels.forEach((l,j)=>{
-
-codigo+="void "+g.nome+"_"+l+"(){}\n";
-
-});
-
-});
-
-alert(codigo);
-
-}
-
-</script>
-
+    // Função para gerar código
+    function gerarCodigo() {
+      var code = Blockly.JavaScript.workspaceToCode(workspace);
+      var fullCode = '#include <Adafruit_SSD1306.h>\n// Outras includes e defs...\nvoid setup() {\n  // Setup code\n}\nvoid loop() {\n' + code + '\n}';
+      document.getElementById('code').value = fullCode;
+    }
+  </script>
+  
+  <p>Nota: Este é um exemplo básico. Para código mais completo, adicione funções como initMaze, drawMaze, etc., no código gerado. Teste no Arduino IDE. Para hardware: OLED, Joystick, Buzzer.</p>
 </body>
-
 </html>
