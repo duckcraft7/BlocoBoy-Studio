@@ -1,139 +1,142 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>NanoBoy Universal Engine</title>
-    <style>
-        :root { --primary: #00ff88; --bg: #121212; }
-        body { font-family: 'Courier New', monospace; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #1e1e1e; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); }
-        .main { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Paleta de Blocos Genéricos */
-        #palette { width: 260px; background: #181818; padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
-        .category { margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .category h4 { color: var(--primary); margin: 5px 0; font-size: 12px; }
-        
-        .block { padding: 8px; margin-bottom: 5px; border-radius: 4px; cursor: grab; font-size: 11px; color: #000; font-weight: bold; }
-        .b-event { background: #ff4757; }   /* Gatilhos: Quando... */
-        .b-action { background: #54a0ff; }  /* Ações: Mova, Desenhe... */
-        .b-logic { background: #ffa502; }   /* Lógica: Se, Enquanto... */
-        .b-var { background: #2ed573; }     /* Variáveis: Vida, Pontos... */
-
-        #workspace { flex: 1; background: #1e1e1e; padding: 25px; overflow-y: auto; }
-        .workspace-block { display: flex; align-items: center; background: #333; margin-bottom: 4px; padding: 8px; border-radius: 4px; border-left: 5px solid; }
-
-        #output { width: 400px; background: #181818; border-left: 1px solid #333; padding: 15px; display: flex; flex-direction: column; }
-        canvas { background: #000; width: 100%; height: 160px; border: 4px solid #333; image-rendering: pixelated; }
-        textarea { width: 100%; flex: 1; background: #000; color: #0f0; border: none; font-size: 11px; padding: 10px; margin-top: 10px; }
-        .btn { padding: 10px; border: none; background: var(--primary); color: #000; font-weight: bold; cursor: pointer; border-radius: 4px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>NanoBoy Maker - Google Blockly</title>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://unpkg.com/blockly/javascript_compressed"></script>
+  <style>
+    body { background: #1e1e1e; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+    header { background: #333; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff88; }
+    .main { display: flex; flex: 1; }
+    #blocklyDiv { flex: 3; }
+    #codeSide { flex: 1; background: #252526; padding: 15px; display: flex; flex-direction: column; border-left: 2px solid #000; }
+    textarea { flex: 1; background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid #444; margin-top: 10px; }
+    .btn { background: #00ff88; color: black; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+  </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0">NanoBoy Universal 🛠️</h2>
-    <button class="btn" onclick="gerarCodigo()">GERAR C++ DO JOGO</button>
+  <h2>NanoBoy Maker 🕹️</h2>
+  <button class="btn" onclick="exportar()">GERAR CÓDIGO ARDUINO</button>
 </header>
 
 <div class="main">
-    <div id="palette">
-        <div class="category">
-            <h4>EVENTOS</h4>
-            <div class="block b-event" draggable="true" data-type="on_tick">⏰ A cada frame</div>
-            <div class="block b-event" draggable="true" data-type="on_btn">🔘 Se apertar botão</div>
-        </div>
-        <div class="category">
-            <h4>MOVIMENTO</h4>
-            <div class="block b-action" draggable="true" data-type="move_x">➡️ Mover em X</div>
-            <div class="block b-action" draggable="true" data-type="move_y">⬇️ Mover em Y</div>
-            <div class="block b-action" draggable="true" data-type="set_pos">📍 Teletransportar</div>
-        </div>
-        <div class="category">
-            <h4>LÓGICA/FÍSICA</h4>
-            <div class="block b-logic" draggable="true" data-type="if_col">💥 Se colidir com...</div>
-            <div class="block b-logic" draggable="true" data-type="if_out">🧱 Se sair da tela</div>
-            <div class="block b-logic" draggable="true" data-type="game_over">💀 Game Over</div>
-        </div>
-        <div class="category">
-            <h4>VARIÁVEIS</h4>
-            <div class="block b-var" draggable="true" data-type="add_score">🏆 Somar Ponto</div>
-            <div class="block b-var" draggable="true" data-type="set_val">⚙️ Definir valor</div>
-        </div>
-    </div>
-
-    <div id="workspace" ondragover="event.preventDefault()" ondrop="drop(event)">
-        </div>
-
-    <div id="output">
-        <canvas id="preview" width="128" height="64"></canvas>
-        <div style="margin-top:10px; display:flex; gap:5px">
-            <button class="btn" onclick="runSim()">TESTAR</button>
-            <button class="btn" style="background:#444; color:white" onclick="location.reload()">LIMPAR</button>
-        </div>
-        <textarea id="code-box" readonly placeholder="Código Arduino Nano..."></textarea>
-    </div>
+  <div id="blocklyDiv"></div>
+  <div id="codeSide">
+    <h3 style="margin:0">Código C++ (Copie para o Wokwi)</h3>
+    <textarea id="outputCode" readonly></textarea>
+  </div>
 </div>
 
+<xml id="toolbox" style="display: none">
+  <category name="Lógica" colour="210">
+    <block type="controls_if"></block>
+    <block type="logic_compare"></block>
+    <block type="logic_operation"></block>
+    <block type="logic_boolean"></block>
+  </category>
+  <category name="Loops" colour="120">
+    <block type="controls_repeat_ext"></block>
+    <block type="controls_whileUntil"></block>
+  </category>
+  <category name="Matemática" colour="230">
+    <block type="math_number"></block>
+    <block type="math_arithmetic"></block>
+    <block type="math_random_int"></block>
+  </category>
+  <category name="Variáveis" colour="330" custom="VARIABLE"></category>
+  <sep></sep>
+  <category name="NanoBoy (Hardware)" colour="160">
+    <block type="nano_draw_rect"></block>
+    <block type="nano_btn_pressed"></block>
+    <block type="nano_clear"></block>
+  </category>
+</xml>
+
 <script>
-    function drop(e) {
-        e.preventDefault();
-        const type = e.dataTransfer.getData("type");
-        const block = document.createElement("div");
-        block.className = "workspace-block";
-        block.style.borderLeftColor = window.getComputedStyle(document.querySelector(`[data-type="${type}"]`)).backgroundColor;
-        block.innerHTML = `<span>${e.dataTransfer.getData("text")}</span> <input type="number" value="1" style="width:40px; margin:0 10px"> <button onclick="this.parentElement.remove()">×</button>`;
-        block.dataset.type = type;
-        document.getElementById("workspace").appendChild(block);
-    }
+// 1. DEFINIR OS BLOCOS DE CONEXÃO COM O ARDUINO
+Blockly.defineBlocksWithJsonArray([
+  {
+    "type": "nano_draw_rect",
+    "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4",
+    "args0": [
+      { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" },
+      { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }
+    ],
+    "previousStatement": null, "nextStatement": null, "colour": 160
+  },
+  {
+    "type": "nano_btn_pressed",
+    "message0": "Botão %1 pressionado?",
+    "args0": [
+      { "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esquerda (D3)", "3"], ["Direita (D4)", "4"]] }
+    ],
+    "output": "Boolean", "colour": 160
+  },
+  {
+    "type": "nano_clear",
+    "message0": "Limpar Tela",
+    "previousStatement": null, "nextStatement": null, "colour": 160
+  }
+]);
 
-    document.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData("type", e.target.dataset.type);
-        e.dataTransfer.setData("text", e.target.innerText);
-    });
+// 2. CONFIGURAR O GERADOR DE C++ (Simulado via JavaScript)
+const workspace = Blockly.inject('blocklyDiv', {
+  toolbox: document.getElementById('toolbox'),
+  theme: 'dark'
+});
 
-    // --- GERADOR DE C++ GENÉRICO ---
-    function gerarCodigo() {
-        const blocks = Array.from(document.getElementById('workspace').querySelectorAll('.workspace-block'));
-        let logic = "";
-        
-        blocks.forEach(b => {
-            const val = b.querySelector('input').value;
-            const t = b.dataset.type;
-            if(t === 'move_x') logic += `  px += ${val};\n`;
-            if(t === 'move_y') logic += `  py += ${val};\n`;
-            if(t === 'on_btn') logic += `  if(digitalRead(2)==LOW) py -= ${val*3};\n`;
-            if(t === 'add_score') logic += `  score += ${val};\n`;
-            if(t === 'if_out') logic += `  if(py > 64 || py < 0) state = 1;\n`;
-        });
+function exportar() {
+  // Traduz os blocos para uma lógica de texto simples
+  const code = Blockly.JavaScript.workspaceToCode(workspace);
+  
+  // Limpa o código JS para parecer C++ de Arduino
+  let finalCpp = code.replace(/var /g, "int ").replace(/;/g, ";\n");
 
-        const code = `
+  const template = `
 #include <Adafruit_SSD1306.h>
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
 
-int px=20, py=30, score=0;
-uint8_t state=0; // 0=Play, 1=GameOver
-
 void setup() {
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(2, INPUT_PULLUP);
+  pinMode(2, INPUT_PULLUP); // Pulo
+  pinMode(3, INPUT_PULLUP); // Esq
+  pinMode(4, INPUT_PULLUP); // Dir
 }
 
 void loop() {
   d.clearDisplay();
-  if(state == 0) {
-    // Lógica Universal:
-    ${logic}
-    d.fillRect(px, py, 4, 4, WHITE);
-  } else {
-    d.setCursor(30, 30); d.print("GAME OVER");
-    if(digitalRead(2)==LOW) { state=0; py=30; score=0; }
-  }
+  
+  // LÓGICA DO USUÁRIO
+  ${finalCpp}
+  
   d.display();
   delay(20);
-}`;
-        document.getElementById('code-box').value = code;
-    }
+}
+
+// Funções de ponte para os blocos
+void drawRect(int x, int y, int w, int h) { d.fillRect(x, y, w, h, WHITE); }
+`;
+  document.getElementById('outputCode').value = template;
+}
+
+// Lógica de tradução dos blocos customizados
+Blockly.JavaScript['nano_draw_rect'] = function(block) {
+  var x = Blockly.JavaScript.valueToCode(block, 'X', 0) || 0;
+  var y = Blockly.JavaScript.valueToCode(block, 'Y', 0) || 0;
+  var w = Blockly.JavaScript.valueToCode(block, 'W', 0) || 4;
+  var h = Blockly.JavaScript.valueToCode(block, 'H', 0) || 4;
+  return `d.fillRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
+};
+
+Blockly.JavaScript['nano_btn_pressed'] = function(block) {
+  var pin = block.getFieldValue('PIN');
+  return [`(digitalRead(${pin}) == LOW)`, 0];
+};
+
+Blockly.JavaScript['nano_clear'] = function(block) { return `d.clearDisplay();\n`; };
 </script>
 </body>
 </html>
