@@ -2,191 +2,181 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NanoBoy Engine v3 - IA e Paredes</title>
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <title>NanoBoy Custom Engine</title>
     <style>
-        :root { --bg: #121212; --panel: #1e1e1e; --accent: #ff4757; --green: #2ed573; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; }
-        .main { display: flex; flex: 1; }
-        #blocklyDiv { flex: 2; border-right: 2px solid #333; }
-        #preview-area { flex: 1; padding: 20px; background: #252526; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        #screen-container { background: #8bac0f; padding: 10px; border: 8px solid #333; border-radius: 5px; }
-        canvas { background: #8bac0f; image-rendering: pixelated; width: 256px; height: 128px; border: 2px solid #306230; }
-        .controls { display: grid; grid-template-columns: repeat(3, 45px); gap: 5px; margin: 15px 0; }
-        .btn-ctrl { width: 45px; height: 45px; background: #333; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; }
-        .btn-action { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        #code-output { width: 100%; height: 120px; background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; box-sizing: border-box; }
+        :root { --gb-green: #8bac0f; --gb-dark: #0f380f; --ui-bg: #1a1a1a; }
+        body { font-family: 'Courier New', monospace; background: var(--ui-bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        header { background: #333; padding: 15px; display: flex; justify-content: space-between; border-bottom: 3px solid var(--gb-dark); }
+        
+        .container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Paleta de Blocos */
+        #palette { width: 250px; background: #252526; padding: 10px; border-right: 2px solid #000; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Área de Script */
+        #script-area { flex: 1; background: #1e1e1e; padding: 20px; overflow-y: auto; position: relative; }
+        .block { 
+            padding: 12px; border-radius: 5px; cursor: grab; font-weight: bold; font-size: 13px;
+            display: flex; align-items: center; gap: 8px; border: 2px solid rgba(0,0,0,0.2);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3); margin-bottom: 5px;
+        }
+        .block-event { background: #ff4757; } /* Vermelho: Gatilhos */
+        .block-move { background: #54a0ff; }  /* Azul: Movimento */
+        .block-logic { background: #2ed573; } /* Verde: Lógica/Tetris */
+        .block-math { background: #ffa502; }  /* Laranja: Valores */
+
+        /* Preview Area */
+        #preview { width: 350px; background: #2d2d2d; padding: 20px; border-left: 2px solid #000; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: var(--gb-green); border: 8px solid #555; width: 256px; height: 128px; image-rendering: pixelated; }
+        
+        .drop-zone { border: 2px dashed #444; min-height: 100px; padding: 10px; border-radius: 8px; }
+        textarea { width: 100%; height: 150px; background: #000; color: #0f0; border: none; font-size: 10px; margin-top: 10px; padding: 10px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0; color: var(--green);">NanoBoy Engine v3 🕹️</h2>
-    <button class="btn-action" style="width:auto; background: var(--green);" onclick="publicar()">Publicar Jogo</button>
+    <h2 style="margin:0">NANOBOY SCRIPT PRO 🚀</h2>
+    <button onclick="exportarArduino()" style="background:var(--gb-green); border:none; padding:8px 15px; cursor:pointer; font-weight:bold">GERAR .INO</button>
 </header>
 
-<div class="main">
-    <div id="blocklyDiv"></div>
+<div class="container">
+    <div id="palette">
+        <h3>Blocos</h3>
+        <div class="block block-event" draggable="true" data-type="loop">🔄 Sempre (Loop)</div>
+        <div class="block block-event" draggable="true" data-type="btn_a">🔘 Se Apertar Botão A</div>
+        <div class="block block-move" draggable="true" data-type="gravity">🍎 Aplicar Gravidade</div>
+        <div class="block block-move" draggable="true" data-type="jump">🦘 Impulso (Pulo)</div>
+        <div class="block block-logic" draggable="true" data-type="grid">🧱 Criar Grade Tetris</div>
+        <div class="block block-logic" draggable="true" data-type="move_grid">↔️ Mover na Grade</div>
+        <div class="block block-math" draggable="true" data-type="score">🏆 Ganhar +1 Ponto</div>
+    </div>
 
-    <div id="preview-area">
-        <div id="screen-container">
-            <canvas id="gameCanvas" width="128" height="64"></canvas>
+    <div id="script-area">
+        <h3>Script do Jogo</h3>
+        <div id="workspace" class="drop-zone">
+            </div>
+    </div>
+
+    <div id="preview">
+        <canvas id="screen" width="128" height="64"></canvas>
+        <div style="margin-top:10px; display:flex; gap:5px">
+            <button onclick="runGame()">▶ TESTAR</button>
+            <button onclick="document.getElementById('workspace').innerHTML=''">🗑 LIMPAR</button>
         </div>
-
-        <div class="controls">
-            <div></div><button class="btn-ctrl" onmousedown="k('u',1)" onmouseup="k('u',0)">▲</button><div></div>
-            <button class="btn-ctrl" onmousedown="k('l',1)" onmouseup="k('l',0)">◀</button>
-            <button class="btn-ctrl" onmousedown="k('d',1)" onmouseup="k('d',0)">▼</button>
-            <button class="btn-ctrl" onmousedown="k('r',1)" onmouseup="k('r',0)">▶</button>
-        </div>
-
-        <button class="btn-action" style="background: #ff9f43;" onclick="start()">▶ RODAR PREVIEW</button>
-        <button class="btn-action" style="background: #54a0ff;" onclick="gerarArduino()">💾 GERAR CÓDIGO ARDUINO</button>
-        <textarea id="code-output" readonly></textarea>
+        <textarea id="code-box" readonly placeholder="Código C++ para Arduino Nano..."></textarea>
     </div>
 </div>
 
-<xml id="toolbox" style="display: none">
-    <category name="Mundo" colour="160">
-        <block type="criar_parede"></block>
-        <block type="escrever_texto"></block>
-    </category>
-    <category name="Personagens" colour="230">
-        <block type="mover_player"></block>
-        <block type="ia_inimigo"></block>
-        <block type="matar_player"></block>
-    </category>
-    <category name="Lógica" colour="210">
-        <block type="controls_if"></block>
-        <block type="logic_compare"></block>
-        <block type="se_colidir"></block>
-        <block type="math_number"></block>
-    </category>
-</xml>
-
 <script>
-// --- 1. DEFINIÇÃO DOS NOVOS BLOCOS ---
-Blockly.defineBlocksWithJsonArray([
-    {
-        "type": "criar_parede",
-        "message0": "Criar Parede X: %1 Y: %2 L: %3 A: %4",
-        "args0": [{"type":"input_value","name":"X"},{"type":"input_value","name":"Y"},{"type":"input_value","name":"W"},{"type":"input_value","name":"H"}],
-        "previousStatement": null, "nextStatement": null, "colour": 160
-    },
-    {
-        "type": "matar_player",
-        "message0": "MATAR PLAYER (Reiniciar)",
-        "previousStatement": null, "nextStatement": null, "colour": 0
-    },
-    {
-        "type": "ia_inimigo",
-        "message0": "IA: Inimigo segue Player vel: %1",
-        "args0": [{"type":"input_value","name":"VEL"}],
-        "previousStatement": null, "nextStatement": null, "colour": 290
-    },
-    { "type": "mover_player", "message0": "Mover Player DX: %1 DY: %2", "args0": [{"type":"input_value","name":"DX"},{"type":"input_value","name":"DY"}], "previousStatement": null, "nextStatement": null, "colour": 230 },
-    { "type": "escrever_texto", "message0": "Texto: %1 em X:%2 Y:%3", "args0": [{"type":"input_value","name":"T"},{"type":"input_value","name":"X"},{"type":"input_value","name":"Y"}], "previousStatement": null, "nextStatement": null, "colour": 160 },
-    { "type": "se_colidir", "message0": "Player toca no Inimigo?", "output": "Boolean", "colour": 210 }
-]);
+    const workspace = document.getElementById('workspace');
+    let gameActive = false;
+    let py = 30, pv = 0; // Física do Player
+    let score = 0;
 
-// --- 2. ENGINE DO PREVIEW ---
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let px=64, py=32, ex=10, ey=10;
-let walls = [];
-let keys = {u:0, d:0, l:0, r:0};
-let loop;
+    // --- SISTEMA DE DRAG AND DROP ---
+    document.addEventListener('dragstart', (e) => {
+        if(e.target.classList.contains('block')) {
+            e.dataTransfer.setData('type', e.target.dataset.type);
+            e.dataTransfer.setData('html', e.target.outerHTML);
+        }
+    });
 
-function k(key, val) { keys[key] = val; }
+    workspace.addEventListener('dragover', (e) => e.preventDefault());
 
-function checkWall(nx, ny) {
-    return walls.some(w => nx < w.x + w.w && nx + 4 > w.x && ny < w.y + w.h && ny + 4 > w.y);
-}
-
-function start() {
-    if(loop) clearInterval(loop);
-    px=64; py=32; ex=10; ey=10;
-    
-    loop = setInterval(() => {
-        // Limpar
-        ctx.fillStyle = "#8bac0f";
-        ctx.fillRect(0,0,128,64);
-        ctx.fillStyle = "#0f380f";
-
-        // Resetar paredes a cada frame para os blocos reconstruírem
-        walls = [];
+    workspace.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        const html = e.dataTransfer.getData('html');
         
-        // Executar código dos blocos no Preview (Interpretador Simples)
-        const code = Blockly.JavaScript.workspaceToCode(workspace);
-        try { eval(code); } catch(e) {}
-
-        // Movimento com colisão de parede
-        let nextX = px, nextY = py;
-        if(keys.u) nextY--; if(keys.d) nextY++;
-        if(keys.l) nextX--; if(keys.r) nextX++;
+        const newBlock = document.createElement('div');
+        newBlock.innerHTML = html;
+        const el = newBlock.firstChild;
+        el.style.cursor = 'default';
         
-        if(!checkWall(nextX, py)) px = nextX;
-        if(!checkWall(px, nextY)) py = nextY;
+        // Adicionar botão de remover
+        const del = document.createElement('span');
+        del.innerHTML = ' [x]';
+        del.style.color = 'black';
+        del.style.cursor = 'pointer';
+        del.onclick = () => el.remove();
+        el.appendChild(del);
+        
+        workspace.appendChild(el);
+    });
 
-        // Desenhar Player e Inimigo
-        ctx.fillRect(px, py, 4, 4); 
-        ctx.strokeRect(ex, ey, 5, 5); 
-    }, 50);
-}
+    // --- MOTOR DO JOGO (PREVIEW) ---
+    function runGame() {
+        gameActive = true;
+        const ctx = document.getElementById('screen').getContext('2d');
+        const blocks = Array.from(workspace.children).map(b => b.dataset.type);
+        
+        py = 30; pv = 0; score = 0;
 
-// --- 3. GERADORES DE CÓDIGO ---
-const workspace = Blockly.inject('blocklyDiv', {toolbox:document.getElementById('toolbox'), theme:'dark'});
+        function loop() {
+            if(!gameActive) return;
+            ctx.fillStyle = "#8bac0f";
+            ctx.fillRect(0,0,128,64);
+            ctx.fillStyle = "#0f380f";
 
-// Tradução para o Preview (JS)
-Blockly.JavaScript['criar_parede'] = function(block) {
-    const x = Blockly.JavaScript.valueToCode(block, 'X', 0);
-    const y = Blockly.JavaScript.valueToCode(block, 'Y', 0);
-    const w = Blockly.JavaScript.valueToCode(block, 'W', 0);
-    const h = Blockly.JavaScript.valueToCode(block, 'H', 0);
-    return `walls.push({x:${x}, y:${y}, w:${w}, h:${h}}); ctx.fillRect(${x},${y},${w},${h});\n`;
-};
+            // Processar Lógica de Blocos
+            blocks.forEach(type => {
+                if(type === 'gravity') {
+                    pv += 0.2; // Gravidade
+                    py += pv;
+                }
+                if(type === 'grid') {
+                    // Desenha mini grade de Tetris no fundo
+                    for(let i=0; i<128; i+=8) ctx.strokeRect(i,0,1,64);
+                }
+            });
 
-Blockly.JavaScript['ia_inimigo'] = function(block) {
-    const v = Blockly.JavaScript.valueToCode(block, 'VEL', 0) || '0.5';
-    return `if(ex < px) ex+=${v}; if(ex > px) ex-=${v}; if(ey < py) ey+=${v}; if(ey > py) ey-=${v};\n`;
-};
+            // Chão (Morte)
+            if(py > 60) { py = 60; pv = 0; }
 
-Blockly.JavaScript['matar_player'] = function(block) {
-    return `if(Math.abs(px-ex)<5 && Math.abs(py-ey)<5) { px=64; py=32; }\n`;
-};
+            ctx.fillRect(40, py, 6, 6); // O Player
+            ctx.fillText("SCORE: " + score, 5, 10);
 
-// Funções auxiliares de matemática para o gerador
-Blockly.JavaScript['math_number'] = function(block) { return [block.getFieldValue('NUM'), 0]; };
-Blockly.JavaScript['mover_player'] = function(block) { 
-    return `px += ${Blockly.JavaScript.valueToCode(block, 'DX', 0)}; py += ${Blockly.JavaScript.valueToCode(block, 'DY', 0)};\n`; 
-};
+            requestAnimationFrame(loop);
+        }
+        loop();
+    }
 
-function gerarArduino() {
-    const code = Blockly.JavaScript.workspaceToCode(workspace);
-    const cleanCode = code.replace(/ctx\..*;/g, '').replace(/walls\.push.*;/g, ''); // Limpa comandos de canvas
-    
-    document.getElementById('code-output').value = `
+    // --- TRADUTOR PARA ARDUINO NANO ---
+    function exportarArduino() {
+        const blocks = Array.from(workspace.children).map(b => b.dataset.type);
+        let loopCode = "";
+        
+        blocks.forEach(type => {
+            switch(type) {
+                case 'gravity': loopCode += "  v += 0.5; y += v;\n"; break;
+                case 'jump': loopCode += "  if(digitalRead(2)==LOW) v = -3;\n"; break;
+                case 'score': loopCode += "  ponto++;\n"; break;
+                case 'grid': loopCode += "  desenharGrade();\n"; break;
+            }
+        });
+
+        const fullCode = `
 #include <Adafruit_SSD1306.h>
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
-float px=64, py=32, ex=10, ey=10;
+float y=30, v=0;
+int ponto=0;
 
 void setup() {
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(2, INPUT_PULLUP); // Exemplo de pino
+  pinMode(2, INPUT_PULLUP); // Botão de Pulo
 }
 
 void loop() {
   d.clearDisplay();
-  // --- LÓGICA DOS BLOCOS ---
-  ${cleanCode}
-  // -----------------------
-  d.fillRect(px, py, 4, 4, WHITE);
-  d.drawRect(ex, ey, 5, 5, WHITE);
+  ${loopCode}
+  d.fillRect(40, (int)y, 6, 6, WHITE);
   d.display();
   delay(30);
 }`;
-}
+        document.getElementById('code-box').value = fullCode;
+    }
 </script>
 </body>
 </html>
