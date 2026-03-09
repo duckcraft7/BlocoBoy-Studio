@@ -2,75 +2,87 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NanoBoy Engine Pro - Realismo & Game Over</title>
+    <title>NanoBoy Universal Engine</title>
     <style>
-        :root { --main: #00d2ff; --bg: #111; --panel: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
-        .container { display: flex; flex: 1; overflow: hidden; }
+        :root { --primary: #00ff88; --bg: #121212; }
+        body { font-family: 'Courier New', monospace; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1e1e1e; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); }
+        .main { display: flex; flex: 1; overflow: hidden; }
         
-        /* Paleta de Blocos */
-        #palette { width: 280px; background: #252526; padding: 15px; border-right: 2px solid #000; overflow-y: auto; }
-        .block { padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: grab; font-size: 12px; font-weight: bold; color: #000; border-left: 6px solid rgba(0,0,0,0.3); }
-        .b-sys { background: #ff4757; }   /* Sistema/GameOver */
-        .b-flappy { background: #eccc68; } /* Flappy Bird */
-        .b-tetris { background: #70a1ff; } /* Tetris */
+        /* Paleta de Blocos Genéricos */
+        #palette { width: 260px; background: #181818; padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
+        .category { margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .category h4 { color: var(--primary); margin: 5px 0; font-size: 12px; }
+        
+        .block { padding: 8px; margin-bottom: 5px; border-radius: 4px; cursor: grab; font-size: 11px; color: #000; font-weight: bold; }
+        .b-event { background: #ff4757; }   /* Gatilhos: Quando... */
+        .b-action { background: #54a0ff; }  /* Ações: Mova, Desenhe... */
+        .b-logic { background: #ffa502; }   /* Lógica: Se, Enquanto... */
+        .b-var { background: #2ed573; }     /* Variáveis: Vida, Pontos... */
 
-        /* Área de Trabalho */
-        #workspace { flex: 1; background: #1a1a1a; padding: 20px; overflow-y: auto; border: 2px dashed #333; margin: 10px; border-radius: 8px; }
-        
-        /* Preview e Saída */
-        #output-side { width: 380px; background: var(--panel); padding: 20px; border-left: 2px solid #000; display: flex; flex-direction: column; }
-        canvas { background: #000; width: 100%; height: 150px; image-rendering: pixelated; border: 4px solid #444; border-radius: 4px; }
-        textarea { width: 100%; flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 11px; margin-top: 15px; padding: 10px; border: 1px solid #333; outline: none; }
-        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: var(--main); color: #000; }
+        #workspace { flex: 1; background: #1e1e1e; padding: 25px; overflow-y: auto; }
+        .workspace-block { display: flex; align-items: center; background: #333; margin-bottom: 4px; padding: 8px; border-radius: 4px; border-left: 5px solid; }
+
+        #output { width: 400px; background: #181818; border-left: 1px solid #333; padding: 15px; display: flex; flex-direction: column; }
+        canvas { background: #000; width: 100%; height: 160px; border: 4px solid #333; image-rendering: pixelated; }
+        textarea { width: 100%; flex: 1; background: #000; color: #0f0; border: none; font-size: 11px; padding: 10px; margin-top: 10px; }
+        .btn { padding: 10px; border: none; background: var(--primary); color: #000; font-weight: bold; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0">NanoBoy Script V5 🕹️</h2>
-    <button class="btn" onclick="gerarCodigo()">COMPILAR PARA NANO</button>
+    <h2 style="margin:0">NanoBoy Universal 🛠️</h2>
+    <button class="btn" onclick="gerarCodigo()">GERAR C++ DO JOGO</button>
 </header>
 
-<div class="container">
+<div class="main">
     <div id="palette">
-        <h3>Sistema</h3>
-        <div class="block b-sys" draggable="true" data-type="game_over">🚩 Criar Tela Game Over</div>
-        
-        <h3>Mecânicas Flappy</h3>
-        <div class="block b-flappy" draggable="true" data-type="flap_phys">🕊️ Física: Gravidade Real</div>
-        <div class="block b-flappy" draggable="true" data-type="flap_pipe">🚧 Canos com Vão Real</div>
-        
-        <h3>Mecânicas Tetris</h3>
-        <div class="block b-tetris" draggable="true" data-type="tet_matrix">🔳 Matriz de Colisão (Grid)</div>
-        <div class="block b-tetris" draggable="true" data-type="tet_line">🧹 Limpar Linha Completa</div>
+        <div class="category">
+            <h4>EVENTOS</h4>
+            <div class="block b-event" draggable="true" data-type="on_tick">⏰ A cada frame</div>
+            <div class="block b-event" draggable="true" data-type="on_btn">🔘 Se apertar botão</div>
+        </div>
+        <div class="category">
+            <h4>MOVIMENTO</h4>
+            <div class="block b-action" draggable="true" data-type="move_x">➡️ Mover em X</div>
+            <div class="block b-action" draggable="true" data-type="move_y">⬇️ Mover em Y</div>
+            <div class="block b-action" draggable="true" data-type="set_pos">📍 Teletransportar</div>
+        </div>
+        <div class="category">
+            <h4>LÓGICA/FÍSICA</h4>
+            <div class="block b-logic" draggable="true" data-type="if_col">💥 Se colidir com...</div>
+            <div class="block b-logic" draggable="true" data-type="if_out">🧱 Se sair da tela</div>
+            <div class="block b-logic" draggable="true" data-type="game_over">💀 Game Over</div>
+        </div>
+        <div class="category">
+            <h4>VARIÁVEIS</h4>
+            <div class="block b-var" draggable="true" data-type="add_score">🏆 Somar Ponto</div>
+            <div class="block b-var" draggable="true" data-type="set_val">⚙️ Definir valor</div>
+        </div>
     </div>
 
     <div id="workspace" ondragover="event.preventDefault()" ondrop="drop(event)">
-        <p style="color:#555">Arraste a lógica do seu jogo aqui...</p>
-    </div>
-
-    <div id="output-side">
-        <canvas id="gameSim" width="128" height="64"></canvas>
-        <div style="margin-top:10px; display:flex; gap:10px">
-            <button class="btn" style="background:#2ed573" onclick="rodarSimulacao()">TESTAR JOGO</button>
-            <button class="btn" style="background:#ff4757" onclick="location.reload()">LIMPAR</button>
         </div>
-        <textarea id="arduinoCode" readonly placeholder="O código C++ otimizado aparecerá aqui..."></textarea>
+
+    <div id="output">
+        <canvas id="preview" width="128" height="64"></canvas>
+        <div style="margin-top:10px; display:flex; gap:5px">
+            <button class="btn" onclick="runSim()">TESTAR</button>
+            <button class="btn" style="background:#444; color:white" onclick="location.reload()">LIMPAR</button>
+        </div>
+        <textarea id="code-box" readonly placeholder="Código Arduino Nano..."></textarea>
     </div>
 </div>
 
 <script>
-    let blocksInWorkspace = [];
-    let state = "PLAY"; // PLAY ou GAMEOVER
-
     function drop(e) {
         e.preventDefault();
         const type = e.dataTransfer.getData("type");
         const block = document.createElement("div");
-        block.className = "block " + e.srcElement.className;
-        block.innerHTML = e.dataTransfer.getData("text") + " <span onclick='this.parentElement.remove()' style='float:right'>×</span>";
+        block.className = "workspace-block";
+        block.style.borderLeftColor = window.getComputedStyle(document.querySelector(`[data-type="${type}"]`)).backgroundColor;
+        block.innerHTML = `<span>${e.dataTransfer.getData("text")}</span> <input type="number" value="1" style="width:40px; margin:0 10px"> <button onclick="this.parentElement.remove()">×</button>`;
         block.dataset.type = type;
         document.getElementById("workspace").appendChild(block);
     }
@@ -80,92 +92,47 @@
         e.dataTransfer.setData("text", e.target.innerText);
     });
 
-    // --- SIMULADOR DE PREVIEW ---
-    function rodarSimulacao() {
-        const ctx = document.getElementById('gameSim').getContext('2d');
-        const activeBlocks = Array.from(document.getElementById('workspace').querySelectorAll('.block')).map(b => b.dataset.type);
-        
-        let py = 32, pv = 0, px = 128;
-        state = "PLAY";
-
-        let loop = setInterval(() => {
-            ctx.fillStyle = "#000";
-            ctx.fillRect(0,0,128,64);
-
-            if(state === "PLAY") {
-                activeBlocks.forEach(t => {
-                    if(t === 'flap_phys') { pv += 0.2; py += pv; }
-                    if(t === 'flap_pipe') { 
-                        px -= 2; if(px < -10) px = 128;
-                        ctx.fillStyle = "#fff";
-                        ctx.fillRect(px, 0, 8, 20); // Cano topo
-                        ctx.fillRect(px, 45, 8, 20); // Cano base
-                    }
-                });
-
-                ctx.fillStyle = "#00d2ff";
-                ctx.fillRect(20, py, 4, 4);
-
-                // Colisão simples para testar Game Over
-                if(py > 60 || py < 0 || (px < 24 && px > 16 && (py < 20 || py > 45))) {
-                    if(activeBlocks.includes('game_over')) state = "GAMEOVER";
-                    else { py = 32; pv = 0; px = 128; } // Reset simples se não tiver bloco Game Over
-                }
-            } else {
-                ctx.fillStyle = "white";
-                ctx.font = "12px Arial";
-                ctx.fillText("GAME OVER", 30, 35);
-                ctx.font = "8px Arial";
-                ctx.fillText("Clique em Testar para reiniciar", 15, 50);
-            }
-        }, 30);
-    }
-
-    // --- GERADOR DE C++ OTIMIZADO PARA NANO ---
+    // --- GERADOR DE C++ GENÉRICO ---
     function gerarCodigo() {
-        const activeBlocks = Array.from(document.getElementById('workspace').querySelectorAll('.block')).map(b => b.dataset.type);
-        
-        let vars = "uint8_t st=0; // 0:Play, 1:GameOver\nint8_t y=32, v=0; uint8_t px=127, ph=20;";
+        const blocks = Array.from(document.getElementById('workspace').querySelectorAll('.workspace-block'));
         let logic = "";
-
-        if(activeBlocks.includes('tet_matrix')) vars += "\nuint8_t grid[16][8] = {0}; // Matriz Tetris";
-
-        activeBlocks.forEach(t => {
-            if(t === 'flap_phys') logic += "    v += 1; y += v/4; if(digitalRead(2)==LOW) v = -8;\n";
-            if(t === 'flap_pipe') logic += "    px--; if(px==0) { px=127; ph=random(10,35); }\n";
-            if(t === 'game_over') logic += "    if(y>60 || y<0) st=1; // Ativa Game Over\n";
+        
+        blocks.forEach(b => {
+            const val = b.querySelector('input').value;
+            const t = b.dataset.type;
+            if(t === 'move_x') logic += `  px += ${val};\n`;
+            if(t === 'move_y') logic += `  py += ${val};\n`;
+            if(t === 'on_btn') logic += `  if(digitalRead(2)==LOW) py -= ${val*3};\n`;
+            if(t === 'add_score') logic += `  score += ${val};\n`;
+            if(t === 'if_out') logic += `  if(py > 64 || py < 0) state = 1;\n`;
         });
 
-        const fullCode = `
+        const code = `
 #include <Adafruit_SSD1306.h>
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
 
-${vars}
+int px=20, py=30, score=0;
+uint8_t state=0; // 0=Play, 1=GameOver
 
 void setup() {
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(2, INPUT_PULLUP); // Botao de ação
+  pinMode(2, INPUT_PULLUP);
 }
 
 void loop() {
   d.clearDisplay();
-  
-  if(st == 0) { // ESTADO: JOGANDO
-${logic}
-    d.fillRect(20, y, 4, 4, WHITE); // Player
-    d.fillRect(px, 0, 8, ph, WHITE); // Cano Cima
-    d.fillRect(px, ph+25, 8, 64, WHITE); // Cano Baixo
-  } 
-  else { // ESTADO: GAME OVER
-    d.setCursor(35, 25);
-    d.print("GAME OVER");
-    if(digitalRead(2) == LOW) { y=32; v=0; px=127; st=0; } // Reiniciar
+  if(state == 0) {
+    // Lógica Universal:
+    ${logic}
+    d.fillRect(px, py, 4, 4, WHITE);
+  } else {
+    d.setCursor(30, 30); d.print("GAME OVER");
+    if(digitalRead(2)==LOW) { state=0; py=30; score=0; }
   }
-
   d.display();
   delay(20);
 }`;
-        document.getElementById('arduinoCode').value = fullCode;
+        document.getElementById('code-box').value = code;
     }
 </script>
 </body>
