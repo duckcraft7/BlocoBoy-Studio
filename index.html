@@ -1,32 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>NanoBoy Maker - Google Blockly</title>
+  <title>NanoBoy Maker - Engine de Jogos</title>
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://unpkg.com/blockly/blocks_compressed"></script>
   <script src="https://unpkg.com/blockly/javascript_compressed"></script>
+  <script src="https://unpkg.com/blockly/msg/pt-br.js"></script>
+
   <style>
-    body { background: #1e1e1e; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-    header { background: #333; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff88; }
-    .main { display: flex; flex: 1; }
+    :root { --main: #00ff88; --bg: #121212; }
+    body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header { background: #1e1e1e; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
+    .container { display: flex; flex: 1; }
     #blocklyDiv { flex: 3; }
-    #codeSide { flex: 1; background: #252526; padding: 15px; display: flex; flex-direction: column; border-left: 2px solid #000; }
-    textarea { flex: 1; background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid #444; margin-top: 10px; }
-    .btn { background: #00ff88; color: black; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+    #codeSide { flex: 1; background: #181818; padding: 20px; display: flex; flex-direction: column; border-left: 2px solid #333; }
+    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 12px; padding: 15px; border: 1px solid #444; margin-top: 10px; border-radius: 4px; resize: none; }
+    .btn { background: var(--main); color: black; border: none; padding: 12px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; transition: 0.2s; }
+    .btn:hover { background: #00cc6e; transform: scale(1.05); }
+    h3 { margin: 0; font-size: 16px; color: var(--main); }
   </style>
 </head>
 <body>
 
 <header>
-  <h2>NanoBoy Maker 🕹️</h2>
-  <button class="btn" onclick="exportar()">GERAR CÓDIGO ARDUINO</button>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span style="font-size: 24px;">🕹️</span>
+    <h2 style="margin:0">NanoBoy Universal</h2>
+  </div>
+  <button class="btn" onclick="exportarCodigo()">GERAR C++ PARA ARDUINO</button>
 </header>
 
-<div class="main">
+<div class="container">
   <div id="blocklyDiv"></div>
   <div id="codeSide">
-    <h3 style="margin:0">Código C++ (Copie para o Wokwi)</h3>
-    <textarea id="outputCode" readonly></textarea>
+    <h3>📄 Código do Game</h3>
+    <textarea id="outputCode" readonly placeholder="O código C++ aparecerá aqui após clicar em Gerar..."></textarea>
+    <p style="font-size: 11px; color: #888; margin-top: 10px;">Copie este código e cole no seu projeto do Wokwi!</p>
   </div>
 </div>
 
@@ -41,22 +51,21 @@
     <block type="controls_repeat_ext"></block>
     <block type="controls_whileUntil"></block>
   </category>
+  <category name="Variáveis" colour="330" custom="VARIABLE"></category>
   <category name="Matemática" colour="230">
     <block type="math_number"></block>
     <block type="math_arithmetic"></block>
-    <block type="math_random_int"></block>
   </category>
-  <category name="Variáveis" colour="330" custom="VARIABLE"></category>
   <sep></sep>
-  <category name="NanoBoy (Hardware)" colour="160">
+  <category name="👾 NanoBoy" colour="160">
     <block type="nano_draw_rect"></block>
     <block type="nano_btn_pressed"></block>
-    <block type="nano_clear"></block>
+    <block type="nano_draw_text"></block>
   </category>
 </xml>
 
 <script>
-// 1. DEFINIR OS BLOCOS DE CONEXÃO COM O ARDUINO
+// --- 1. DEFINIÇÃO DOS BLOCOS (JSON) ---
 Blockly.defineBlocksWithJsonArray([
   {
     "type": "nano_draw_rect",
@@ -68,75 +77,84 @@ Blockly.defineBlocksWithJsonArray([
     "previousStatement": null, "nextStatement": null, "colour": 160
   },
   {
+    "type": "nano_draw_text",
+    "message0": "Escrever %1 em X: %2 Y: %3",
+    "args0": [
+      { "type": "input_value", "name": "TXT" },
+      { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }
+    ],
+    "previousStatement": null, "nextStatement": null, "colour": 160
+  },
+  {
     "type": "nano_btn_pressed",
     "message0": "Botão %1 pressionado?",
     "args0": [
       { "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esquerda (D3)", "3"], ["Direita (D4)", "4"]] }
     ],
     "output": "Boolean", "colour": 160
-  },
-  {
-    "type": "nano_clear",
-    "message0": "Limpar Tela",
-    "previousStatement": null, "nextStatement": null, "colour": 160
   }
 ]);
 
-// 2. CONFIGURAR O GERADOR DE C++ (Simulado via JavaScript)
+// --- 2. TRADUTORES (Ensinando o Blockly a falar C++) ---
+javascript.javascriptGenerator.forBlock['nano_draw_rect'] = function(block, generator) {
+  var x = generator.valueToCode(block, 'X', 0) || '0';
+  var y = generator.valueToCode(block, 'Y', 0) || '0';
+  var w = generator.valueToCode(block, 'W', 0) || '4';
+  var h = generator.valueToCode(block, 'H', 0) || '4';
+  return `d.fillRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
+};
+
+javascript.javascriptGenerator.forBlock['nano_draw_text'] = function(block, generator) {
+  var txt = generator.valueToCode(block, 'TXT', 0) || '" "';
+  var x = generator.valueToCode(block, 'X', 0) || '0';
+  var y = generator.valueToCode(block, 'Y', 0) || '0';
+  return `d.setCursor(${x}, ${y}); d.print(${txt});\n`;
+};
+
+javascript.javascriptGenerator.forBlock['nano_btn_pressed'] = function(block) {
+  var pin = block.getFieldValue('PIN');
+  return [`(digitalRead(${pin}) == LOW)`, 0];
+};
+
+// --- 3. INICIALIZAR O EDITOR ---
 const workspace = Blockly.inject('blocklyDiv', {
   toolbox: document.getElementById('toolbox'),
-  theme: 'dark'
+  theme: 'dark',
+  grid: { spacing: 20, length: 3, colour: '#333', snap: true }
 });
 
-function exportar() {
-  // Traduz os blocos para uma lógica de texto simples
-  const code = Blockly.JavaScript.workspaceToCode(workspace);
+// --- 4. FUNÇÃO GERAR ---
+function exportarCodigo() {
+  // Gera o código a partir dos blocos
+  const blockCode = javascript.javascriptGenerator.workspaceToCode(workspace);
   
-  // Limpa o código JS para parecer C++ de Arduino
-  let finalCpp = code.replace(/var /g, "int ").replace(/;/g, ";\n");
-
-  const template = `
+  // Cria o template do Arduino
+  const finalTemplate = `// Código Gerado pelo NanoBoy Universal
 #include <Adafruit_SSD1306.h>
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
 
 void setup() {
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(2, INPUT_PULLUP); // Pulo
-  pinMode(3, INPUT_PULLUP); // Esq
-  pinMode(4, INPUT_PULLUP); // Dir
+  d.setTextColor(WHITE);
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+  pinMode(4, INPUT_PULLUP);
 }
 
 void loop() {
   d.clearDisplay();
   
-  // LÓGICA DO USUÁRIO
-  ${finalCpp}
-  
+  // --- INÍCIO DA LÓGICA DOS BLOCOS ---
+${blockCode}
+  // --- FIM DA LÓGICA ---
+
   d.display();
   delay(20);
 }
-
-// Funções de ponte para os blocos
-void drawRect(int x, int y, int w, int h) { d.fillRect(x, y, w, h, WHITE); }
 `;
-  document.getElementById('outputCode').value = template;
+  
+  document.getElementById('outputCode').value = finalTemplate;
 }
-
-// Lógica de tradução dos blocos customizados
-Blockly.JavaScript['nano_draw_rect'] = function(block) {
-  var x = Blockly.JavaScript.valueToCode(block, 'X', 0) || 0;
-  var y = Blockly.JavaScript.valueToCode(block, 'Y', 0) || 0;
-  var w = Blockly.JavaScript.valueToCode(block, 'W', 0) || 4;
-  var h = Blockly.JavaScript.valueToCode(block, 'H', 0) || 4;
-  return `d.fillRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
-};
-
-Blockly.JavaScript['nano_btn_pressed'] = function(block) {
-  var pin = block.getFieldValue('PIN');
-  return [`(digitalRead(${pin}) == LOW)`, 0];
-};
-
-Blockly.JavaScript['nano_clear'] = function(block) { return `d.clearDisplay();\n`; };
 </script>
 </body>
 </html>
