@@ -2,171 +2,372 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NanoBoy Maker - Crie e Compartilhe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NanoBoy Maker | Editor de Jogos</title>
+    
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script src="https://unpkg.com/blockly/blocks_compressed"></script>
+    <script src="https://unpkg.com/blockly/javascript_compressed"></script>
+    
     <style>
-        body { font-family: sans-serif; background: #1e1e1e; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { padding: 10px; background: #333; display: flex; justify-content: space-between; align-items: center; }
-        #main { display: flex; flex: 1; }
-        #blocklyDiv { flex: 3; border-right: 2px solid #444; }
-        #sidebar { flex: 1; padding: 15px; overflow-y: auto; background: #252526; }
-        button { cursor: pointer; padding: 10px; border: none; border-radius: 5px; font-weight: bold; }
-        .btn-green { background: #28a745; color: white; }
-        .btn-blue { background: #007bff; color: white; margin-top: 10px; width: 100%; }
-        .game-card { background: #3c3c3c; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        pre { background: #000; padding: 10px; font-size: 10px; color: #0f0; max-height: 200px; overflow: auto; }
+        :root {
+            --bg: #121212;
+            --panel: #1e1e1e;
+            --accent: #00ff88;
+            --text: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--panel);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+        }
+
+        #blocklyDiv {
+            flex: 3;
+            height: 100%;
+        }
+
+        #sidebar {
+            flex: 1;
+            background-color: var(--panel);
+            border-left: 2px solid #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: #00cc6e; }
+
+        .btn-secondary { background: #333; color: white; margin-top: 5px; }
+        .btn-secondary:hover { background: #444; }
+
+        .code-output {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            height: 200px;
+            overflow: auto;
+            border: 1px solid #333;
+            white-space: pre-wrap;
+        }
+
+        .game-card {
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #444;
+        }
+
+        h3 { margin-top: 0; color: var(--accent); font-size: 16px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>NanoBoy Maker 🕹️</h1>
-    <div>
-        <button class="btn-green" onclick="publicarJogo()">Publicar Jogo</button>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">🕹️</span>
+        <h2 style="margin: 0;">NanoBoy Maker</h2>
     </div>
+    <button class="btn btn-primary" onclick="publicarJogo()">Publicar Jogo</button>
 </header>
 
-<div id="main">
+<div class="main-container">
     <div id="blocklyDiv"></div>
 
     <div id="sidebar">
-        <h3>Galeria da Comunidade</h3>
-        <div id="galeria">
-            <p style="color: #888;">Nenhum jogo publicado ainda...</p>
+        <div>
+            <h3>Código Arduino (Nano)</h3>
+            <div id="codigoC" class="code-output">// O código aparecerá aqui...</div>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="copyCode()">Copiar Código</button>
         </div>
-        
-        <hr>
-        <h3>Código Arduino/Wokwi</h3>
-        <button class="btn-blue" onclick="exportarCodigo()">Gerar Código C++</button>
-        <pre id="codigoC++">// O código aparecerá aqui...</pre>
+
+        <hr style="border: 0; border-top: 1px solid #333; width: 100%;">
+
+        <div>
+            <h3>Galeria da Comunidade</h3>
+            <div id="galeria">
+                </div>
+        </div>
     </div>
 </div>
 
+<xml id="toolbox" style="display: none">
+    <category name="Movimento" colour="230">
+        <block type="set_player_pos"></block>
+        <block type="move_player"></block>
+    </category>
+    <category name="Controles" colour="20">
+        <block type="on_button"></block>
+    </category>
+    <category name="Desenho" colour="160">
+        <block type="draw_pixel"></block>
+        <block type="draw_rect"></block>
+        <block type="draw_text"></block>
+    </category>
+    <category name="Som" colour="300">
+        <block type="play_tone"></block>
+    </category>
+    <sep></sep>
+    <category name="Lógica" colour="210">
+        <block type="controls_if"></block>
+        <block type="logic_compare"></block>
+        <block type="logic_operation"></block>
+        <block type="logic_boolean"></block>
+    </category>
+    <category name="Matemática" colour="230">
+        <block type="math_number"></block>
+        <block type="math_arithmetic"></block>
+    </category>
+    <category name="Variáveis" colour="330" custom="VARIABLE"></category>
+</xml>
+
 <script>
-// 1. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS
+// --- 1. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS ---
 Blockly.defineBlocksWithJsonArray([
-  {
-    "type": "movimentar_player",
-    "message0": "Mover Player x: %1 y: %2",
-    "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }],
-    "previousStatement": null, "nextStatement": null, "colour": 230
-  },
-  {
-    "type": "ao_pressionar_botao",
-    "message0": "Se botão %1 for pressionado",
-    "args0": [{
-      "type": "field_dropdown", "name": "BTN",
-      "options": [["Cima", "2"], ["Baixo", "3"], ["Esquerda", "4"], ["Direita", "5"], ["A", "6"]]
-    }],
-    "message1": "faça %1",
-    "args1": [{ "type": "input_statement", "name": "DO" }],
-    "previousStatement": null, "nextStatement": null, "colour": 20
-  },
-  {
-      "type": "desenhar_pixel",
-      "message0": "Desenhar Ponto em x: %1 y: %2",
-      "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }],
-      "previousStatement": null, "nextStatement": null, "colour": 160
-  }
+    {
+        "type": "set_player_pos",
+        "message0": "Colocar Player em X: %1 Y: %2",
+        "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }],
+        "previousStatement": null, "nextStatement": null, "colour": 230
+    },
+    {
+        "type": "move_player",
+        "message0": "Mover Player: DX %1 DY %2",
+        "args0": [{ "type": "input_value", "name": "DX" }, { "type": "input_value", "name": "DY" }],
+        "previousStatement": null, "nextStatement": null, "colour": 230
+    },
+    {
+        "type": "on_button",
+        "message0": "Se botão %1 pressionado",
+        "args0": [{
+            "type": "field_dropdown", "name": "BTN",
+            "options": [["Cima", "2"], ["Baixo", "3"], ["Esquerda", "4"], ["Direita", "5"], ["Botão A", "6"]]
+        }],
+        "message1": "faça %1",
+        "args1": [{ "type": "input_statement", "name": "DO" }],
+        "previousStatement": null, "nextStatement": null, "colour": 20
+    },
+    {
+        "type": "draw_pixel",
+        "message0": "Pintar Pixel em X: %1 Y: %2",
+        "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }],
+        "previousStatement": null, "nextStatement": null, "colour": 160
+    },
+    {
+        "type": "draw_text",
+        "message0": "Escrever %1 em X: %2 Y: %3",
+        "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }],
+        "previousStatement": null, "nextStatement": null, "colour": 160
+    },
+    {
+        "type": "draw_rect",
+        "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4",
+        "args0": [
+            { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" },
+            { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }
+        ],
+        "previousStatement": null, "nextStatement": null, "colour": 160
+    },
+    {
+        "type": "play_tone",
+        "message0": "Bipar: Freq %1 Duração %2 ms",
+        "args0": [{ "type": "input_value", "name": "FRQ" }, { "type": "input_value", "name": "DUR" }],
+        "previousStatement": null, "nextStatement": null, "colour": 300
+    }
 ]);
 
-// 2. LÓGICA DO GERADOR DE C++
-const cppGenerator = new Blockly.Generator('C++');
-cppGenerator['movimentar_player'] = function(block) {
-  var x = cppGenerator.valueToCode(block, 'X', 0) || '0';
-  var y = cppGenerator.valueToCode(block, 'Y', 0) || '0';
-  return `playerX += ${x}; playerY += ${y};\n`;
-};
-cppGenerator['ao_pressionar_botao'] = function(block) {
-  var btn = block.getFieldValue('BTN');
-  var branch = cppGenerator.statementToCode(block, 'DO');
-  return `if(digitalRead(${btn}) == LOW) {\n${branch}}\n`;
-};
-cppGenerator['math_number'] = function(block) { return [block.getFieldValue('NUM'), 0]; };
+// --- 2. GERADOR DE C++ ---
+const arduinoGen = new Blockly.Generator('Arduino');
 
-// 3. INICIALIZAÇÃO DO BLOCKLY
-var workspace = Blockly.inject('blocklyDiv', {
-    toolbox: {
-        'kind': 'categoryToolbox',
-        'contents': [
-            { 'kind': 'category', 'name': 'Movimento', 'contents': [{ 'kind': 'block', 'type': 'movimentar_player' }] },
-            { 'kind': 'category', 'name': 'Controles', 'contents': [{ 'kind': 'block', 'type': 'ao_pressionar_botao' }] },
-            { 'kind': 'category', 'name': 'Lógica', 'contents': [{ 'kind': 'block', 'type': 'math_number' }] }
-        ]
-    },
-    theme: 'dark'
+// Configuração básica do gerador
+arduinoGen.scrub_ = function(block, code, opt_thisOnly) {
+    const nextBlock = block.getNextBlock();
+    const nextCode = opt_thisOnly ? '' : arduinoGen.blockToCode(nextBlock);
+    return code + nextCode;
+};
+
+arduinoGen['math_number'] = function(block) { return [block.getFieldValue('NUM'), 0]; };
+arduinoGen['variables_get'] = function(block) { return [block.getFieldValue('VAR'), 0]; };
+arduinoGen['variables_set'] = function(block) {
+    var val = arduinoGen.valueToCode(block, 'VALUE', 0) || '0';
+    return block.getFieldValue('VAR') + " = " + val + ";\n";
+};
+
+arduinoGen['set_player_pos'] = function(block) {
+    var x = arduinoGen.valueToCode(block, 'X', 0) || '0';
+    var y = arduinoGen.valueToCode(block, 'Y', 0) || '0';
+    return `playerX = ${x}; playerY = ${y};\n`;
+};
+
+arduinoGen['move_player'] = function(block) {
+    var dx = arduinoGen.valueToCode(block, 'DX', 0) || '0';
+    var dy = arduinoGen.valueToCode(block, 'DY', 0) || '0';
+    return `playerX += ${dx}; playerY += ${dy};\n`;
+};
+
+arduinoGen['on_button'] = function(block) {
+    var btn = block.getFieldValue('BTN');
+    var branch = arduinoGen.statementToCode(block, 'DO');
+    return `if(digitalRead(${btn}) == LOW) {\n${branch}}\n`;
+};
+
+arduinoGen['draw_pixel'] = function(block) {
+    var x = arduinoGen.valueToCode(block, 'X', 0) || '0';
+    var y = arduinoGen.valueToCode(block, 'Y', 0) || '0';
+    return `display.drawPixel(${x}, ${y}, WHITE);\n`;
+};
+
+arduinoGen['draw_text'] = function(block) {
+    var txt = arduinoGen.valueToCode(block, 'TXT', 0) || '" "';
+    var x = arduinoGen.valueToCode(block, 'X', 0) || '0';
+    var y = arduinoGen.valueToCode(block, 'Y', 0) || '0';
+    return `display.setCursor(${x}, ${y}); display.print(${txt});\n`;
+};
+
+arduinoGen['draw_rect'] = function(block) {
+    var x = arduinoGen.valueToCode(block, 'X', 0);
+    var y = arduinoGen.valueToCode(block, 'Y', 0);
+    var w = arduinoGen.valueToCode(block, 'W', 0);
+    var h = arduinoGen.valueToCode(block, 'H', 0);
+    return `display.drawRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
+};
+
+arduinoGen['play_tone'] = function(block) {
+    var f = arduinoGen.valueToCode(block, 'FRQ', 0);
+    var d = arduinoGen.valueToCode(block, 'DUR', 0);
+    return `tone(11, ${f}, ${d});\n`;
+};
+
+// --- 3. INICIALIZAÇÃO DO EDITOR ---
+const workspace = Blockly.inject('blocklyDiv', {
+    toolbox: document.getElementById('toolbox'),
+    theme: Blockly.Themes.Dark,
+    grid: { spacing: 20, length: 3, colour: '#333', snap: true }
 });
 
-// 4. SISTEMA DE PUBLICAÇÃO (LOCALSTORAGE PARA O TESTE)
-function publicarJogo() {
-    let nome = prompt("Qual o nome do seu jogo?");
-    if(!nome) return;
-    
-    let xml = Blockly.Xml.workspaceToDom(workspace);
-    let xmlText = Blockly.Xml.domToText(xml);
-    
-    let jogos = JSON.parse(localStorage.getItem('meusJogos') || '[]');
-    jogos.push({ nome: nome, data: xmlText });
-    localStorage.setItem('meusJogos', JSON.stringify(jogos));
-    
-    atualizarGaleria();
-}
-
-function atualizarGaleria() {
-    let galeria = document.getElementById('galeria');
-    let jogos = JSON.parse(localStorage.getItem('meusJogos') || '[]');
-    galeria.innerHTML = "";
-    
-    jogos.forEach((jogo, index) => {
-        galeria.innerHTML += `
-            <div class="game-card">
-                <strong>${jogo.nome}</strong><br>
-                <button onclick="carregarJogo(${index})">📂 Abrir</button>
-            </div>`;
-    });
-}
-
-function carregarJogo(index) {
-    let jogos = JSON.parse(localStorage.getItem('meusJogos') || '[]');
-    let xml = Blockly.utils.xml.textToDom(jogos[index].data);
-    workspace.clear();
-    Blockly.Xml.domToWorkspace(xml, workspace);
-}
-
-// 5. EXPORTAR PARA O ARDUINO
-function exportarCodigo() {
-    let code = cppGenerator.workspaceToCode(workspace);
-    let template = `
+function updateCode() {
+    const code = arduinoGen.workspaceToCode(workspace);
+    const template = `// Gerado por NanoBoy Maker
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
-int playerX = 64, playerY = 32;
+
+// Variaveis globais
+int playerX = 64;
+int playerY = 32;
 
 void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextColor(WHITE);
   pinMode(2, INPUT_PULLUP); // Cima
   pinMode(3, INPUT_PULLUP); // Baixo
   pinMode(4, INPUT_PULLUP); // Esquerda
   pinMode(5, INPUT_PULLUP); // Direita
-  pinMode(6, INPUT_PULLUP); // Botão A
+  pinMode(6, INPUT_PULLUP); // Botao A
+  pinMode(11, OUTPUT);      // Buzzer
 }
 
 void loop() {
   display.clearDisplay();
   
-  // LOGICA DO USUARIO
-  ${code}
+  // LOGICA DO JOGO
+${code}
+
+  // Desenha player padrao
+  display.fillRect(playerX, playerY, 4, 4, WHITE);
   
-  display.fillRect(playerX, playerY, 8, 8, WHITE);
   display.display();
-  delay(10);
+  delay(30);
 }`;
-    document.getElementById('codigoC++').innerText = template;
+    document.getElementById('codigoC').innerText = template;
 }
 
-atualizarGaleria();
+workspace.addChangeListener(updateCode);
+
+// --- 4. SISTEMA DE GALERIA ---
+function publicarJogo() {
+    let nome = prompt("Nome do seu jogo:");
+    if(!nome) return;
+    
+    let xml = Blockly.Xml.workspaceToDom(workspace);
+    let xmlText = Blockly.Xml.domToText(xml);
+    
+    let jogos = JSON.parse(localStorage.getItem('nanoboy_gallery') || '[]');
+    jogos.push({ nome: nome, data: xmlText });
+    localStorage.setItem('nanoboy_gallery', JSON.stringify(jogos));
+    
+    alert("Publicado com sucesso!");
+    renderGaleria();
+}
+
+function renderGaleria() {
+    const div = document.getElementById('galeria');
+    const jogos = JSON.parse(localStorage.getItem('nanoboy_gallery') || '[]');
+    div.innerHTML = "";
+    
+    jogos.forEach((j, i) => {
+        div.innerHTML += `
+            <div class="game-card">
+                <strong>${j.nome}</strong><br>
+                <button class="btn btn-secondary" style="font-size: 10px;" onclick="carregarJogo(${i})">ABRIR</button>
+            </div>`;
+    });
+}
+
+function carregarJogo(index) {
+    const jogos = JSON.parse(localStorage.getItem('nanoboy_gallery') || '[]');
+    const xml = Blockly.utils.xml.textToDom(jogos[index].data);
+    workspace.clear();
+    Blockly.Xml.domToWorkspace(xml, workspace);
+}
+
+function copyCode() {
+    const code = document.getElementById('codigoC').innerText;
+    navigator.clipboard.writeText(code);
+    alert("Código copiado!");
+}
+
+renderGaleria();
 </script>
+
 </body>
 </html>
