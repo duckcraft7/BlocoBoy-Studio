@@ -2,71 +2,74 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NanoBoy ESP32 - Pro Engine</title>
+    <title>NanoBoy Engine Ultra - ESP32</title>
     <style>
-        :root { --accent: #e67e22; --bg: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #2c3e50; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--accent); }
+        :root { --bg: #0f0f0f; --accent: #00d4ff; --block-h: 45px; }
+        body { font-family: 'Consolas', monospace; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1a1a1a; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); }
         .main { display: flex; flex: 1; overflow: hidden; }
+        #palette { width: 300px; background: #181818; padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
+        #workspace { flex: 1; background: #222; padding: 20px; position: relative; }
         
-        /* Estilo dos nossos blocos customizados */
-        #palette { width: 280px; background: #252526; padding: 15px; border-right: 2px solid #000; overflow-y: auto; }
-        .block { padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: grab; font-weight: bold; border-left: 5px solid rgba(0,0,0,0.3); }
-        .b-event { background: #eb4d4b; } 
-        .b-ia { background: #686de0; }
-        .b-world { background: #6ab04c; }
-        .b-math { background: #f0932b; }
-
-        #workspace { flex: 1; background: #1e1e1e; padding: 20px; position: relative; overflow-y: auto; outline: none; }
-        #preview { width: 350px; background: #2d3436; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        /* Blocos Estilizados */
+        .block { padding: 12px; margin-bottom: 10px; border-radius: 6px; cursor: grab; font-size: 13px; border-left: 6px solid rgba(0,0,0,0.3); box-shadow: 3px 3px 0px #000; }
+        .b-physics { background: #ff4757; } 
+        .b-tetris { background: #54a0ff; }
+        .b-render { background: #2ed573; }
         
-        canvas { background: #95afc0; border: 6px solid #333; width: 256px; height: 128px; image-rendering: pixelated; }
-        textarea { width: 100%; height: 200px; background: #000; color: #00ff00; font-family: monospace; font-size: 11px; margin-top: 15px; padding: 10px; border: 1px solid var(--accent); }
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        #preview { width: 380px; background: #1a1a1a; padding: 20px; border-left: 1px solid #333; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #000; border: 4px solid #444; width: 256px; height: 128px; image-rendering: pixelated; }
+        textarea { width: 100%; height: 180px; background: #000; color: #00ff88; margin-top: 15px; padding: 10px; font-size: 11px; border: 1px solid #333; }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: var(--accent); color: #000; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0">NanoBoy ESP32 🚀</h2>
-    <button class="btn" style="background:var(--accent)" onclick="gerarArduino()">GERAR CÓDIGO WOKWI</button>
+    <h2 style="margin:0">NanoBoy Pro Engine v4 🕹️</h2>
+    <button class="btn" onclick="gerarCodigo()">GERAR CÓDIGO ESP32</button>
 </header>
 
 <div class="main">
     <div id="palette">
-        <h3>Lógica de Jogo</h3>
-        <div class="block b-event" draggable="true" data-type="gravity">🍎 Física: Gravidade (Flappy)</div>
-        <div class="block b-ia" draggable="true" data-type="ia_follow">🧠 IA: Inimigo Persegue</div>
-        <div class="block b-ia" draggable="true" data-type="kill">💀 Se Tocar: Matar Player</div>
-        <div class="block b-world" draggable="true" data-type="wall">🧱 Criar Parede Sólida</div>
-        <div class="block b-world" draggable="true" data-type="grid">🏁 Ativar Grade (Tetris)</div>
-        <div class="block b-math" draggable="true" data-type="jump">⬆️ Botão: Pular/Subir</div>
+        <h3>Mecânicas Flappy</h3>
+        <div class="block b-physics" draggable="true" data-type="flap_physics">☁️ Física: Gravidade + Pulo</div>
+        <div class="block b-physics" draggable="true" data-type="pipe_gen">🚧 Gerar Canos Dinâmicos</div>
+        
+        <h3>Mecânicas Tetris</h3>
+        <div class="block b-tetris" draggable="true" data-type="tetris_grid">🔳 Criar Matriz 10x20</div>
+        <div class="block b-tetris" draggable="true" data-type="tetris_rotate">🔄 Rotacionar Peça (Matrix)</div>
+        <div class="block b-tetris" draggable="true" data-type="check_lines">🧹 Verificar Linhas Cheias</div>
+
+        <h3>Ações</h3>
+        <div class="block b-render" draggable="true" data-type="draw_all">🖼️ Renderizar Tudo</div>
     </div>
 
     <div id="workspace" ondragover="event.preventDefault()" ondrop="drop(event)">
-        <p style="color:#666">Arraste os blocos para cá...</p>
+        <p style="color:#555">Arraste a lógica do jogo aqui...</p>
     </div>
 
     <div id="preview">
-        <canvas id="gameScreen" width="128" height="64"></canvas>
-        <div style="margin-top:10px">
-            <button class="btn" style="background:#2ecc71" onclick="testar()">TESTAR PREVIEW</button>
+        <canvas id="screen" width="128" height="64"></canvas>
+        <div style="margin-top:10px; display:flex; gap:10px;">
+            <button class="btn" style="background:#2ed573" onclick="startTest()">TESTAR</button>
+            <button class="btn" style="background:#ff4757" onclick="location.reload()">LIMPAR</button>
         </div>
-        <textarea id="code-output" readonly></textarea>
+        <textarea id="code-box" readonly></textarea>
     </div>
 </div>
 
 <script>
-    let px = 60, py = 30, pv = 0;
-    let ex = 10, ey = 10;
-    let gameLoop;
+    let px=20, py=32, vel=0;
+    let pipes = [{x:128, h:20}];
+    let loop;
 
     function drop(e) {
         e.preventDefault();
         const type = e.dataTransfer.getData("type");
         const block = document.createElement("div");
         block.className = "block " + e.srcElement.className;
-        block.innerHTML = e.dataTransfer.getData("text") + " <span onclick='this.parentElement.remove()' style='float:right; cursor:pointer'>❌</span>";
+        block.innerHTML = e.dataTransfer.getData("text") + " <span onclick='this.parentElement.remove()' style='float:right'>×</span>";
         block.dataset.type = type;
         document.getElementById("workspace").appendChild(block);
     }
@@ -76,72 +79,70 @@
         e.dataTransfer.setData("text", e.target.innerText);
     });
 
-    function testar() {
-        const ctx = document.getElementById('gameScreen').getContext('2d');
+    function startTest() {
+        const ctx = document.getElementById('screen').getContext('2d');
         const blocks = Array.from(document.getElementById('workspace').querySelectorAll('.block')).map(b => b.dataset.type);
         
-        if(gameLoop) clearInterval(gameLoop);
-        px = 60; py = 30; pv = 0; ex = 10; ey = 10;
+        if(loop) clearInterval(loop);
+        px=30; py=32; vel=0; pipes = [{x:128, h:25}];
 
-        gameLoop = setInterval(() => {
-            ctx.fillStyle = "#95afc0";
+        loop = setInterval(() => {
+            ctx.fillStyle = "#000";
             ctx.fillRect(0,0,128,64);
-            ctx.fillStyle = "#2d3436";
+            ctx.fillStyle = "#fff";
 
-            blocks.forEach(type => {
-                if(type === 'gravity') { pv += 0.3; py += pv; }
-                if(type === 'ia_follow') { 
-                    if(ex < px) ex += 0.5; else ex -= 0.5;
-                    if(ey < py) ey += 0.5; else ey -= 0.5;
+            blocks.forEach(t => {
+                if(t === 'flap_physics') {
+                    vel += 0.25; // Gravidade real
+                    py += vel;
+                    if(py > 60) py = 60;
                 }
-                if(type === 'kill') {
-                    if(Math.abs(px-ex) < 5 && Math.abs(py-ey) < 5) { px = 60; py = 30; }
+                if(t === 'pipe_gen') {
+                    pipes.forEach(p => {
+                        p.x -= 1.5;
+                        ctx.fillRect(p.x, 0, 10, p.h); // Cano Cima
+                        ctx.fillRect(p.x, p.h + 24, 10, 64); // Cano Baixo (Vão de 24px)
+                        if(p.x < -10) { p.x = 128; p.h = Math.random() * 30 + 5; }
+                    });
                 }
             });
 
-            if(py > 58) { py = 58; pv = 0; }
-            ctx.fillRect(px, py, 6, 6); // Player
-            ctx.strokeRect(ex, ey, 6, 6); // Inimigo
+            ctx.fillRect(px, py, 6, 6); // O Pássaro
         }, 30);
     }
 
-    function gerarArduino() {
+    function gerarCodigo() {
         const blocks = Array.from(document.getElementById('workspace').querySelectorAll('.block')).map(b => b.dataset.type);
-        let logic = "";
+        let cLog = "";
         
-        blocks.forEach(t => {
-            if(t === 'gravity') logic += "  vel += 0.2; py += vel;\n";
-            if(t === 'ia_follow') logic += "  if(ex < px) ex += 0.3; else ex -= 0.3;\n  if(ey < py) ey += 0.3; else ey -= 0.3;\n";
-            if(t === 'kill') logic += "  if(abs(px-ex)<5 && abs(py-ey)<5) { px=60; py=30; }\n";
-            if(t === 'jump') logic += "  if(digitalRead(26) == LOW) vel = -2;\n";
-        });
-
+        if(blocks.includes('tetris_grid')) cLog += "  int grid[20][10] = {0};\n";
+        if(blocks.includes('flap_physics')) cLog += "  v += 0.2; y += v; if(digitalRead(26)==LOW) v = -2.5;\n";
+        
         const code = `
 #include <Adafruit_SSD1306.h>
-#define SDA 21
-#define SCL 22
-
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
-float px=60, py=30, vel=0;
-float ex=10, ey=10;
+float y=32, v=0;
+int pipeX=128, pipeH=20;
 
 void setup() {
-  Wire.begin(SDA, SCL);
+  Wire.begin(21, 22);
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(26, INPUT_PULLUP); // Botão A
+  pinMode(26, INPUT_PULLUP); // Botão de Pulo (Jump)
 }
 
 void loop() {
   d.clearDisplay();
+  ${cLog}
+  // Desenho dos Canos
+  pipeX -= 2; if(pipeX < -10) pipeX = 128;
+  d.fillRect(pipeX, 0, 10, pipeH, WHITE);
+  d.fillRect(pipeX, pipeH + 24, 10, 64, WHITE);
   
-  ${logic}
-
-  d.fillRect(px, py, 6, 6, WHITE); // Player
-  d.drawRect(ex, ey, 6, 6, WHITE); // Inimigo
+  d.fillRect(30, (int)y, 6, 6, WHITE);
   d.display();
   delay(20);
 }`;
-        document.getElementById('code-output').value = code;
+        document.getElementById('code-box').value = code;
     }
 </script>
 </body>
