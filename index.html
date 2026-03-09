@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>NanoBoy Maker v10 - Fixed Engine</title>
+  <title>NanoBoy Maker v11 - Menu System</title>
   
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed"></script>
@@ -27,8 +27,8 @@
 
 <header>
   <div style="display:flex; align-items:center; gap:12px;">
-    <span style="font-size: 28px;">🤖</span>
-    <h2 style="margin:0; font-size: 18px;">NanoBoy Maker v10</h2>
+    <span style="font-size: 28px;">📑</span>
+    <h2 style="margin:0; font-size: 18px;">NanoBoy Multi-Game</h2>
   </div>
   <div class="btn-group">
     <button class="btn" style="background:#444; color:white;" onclick="salvarProjeto()">💾 Salvar</button>
@@ -40,16 +40,17 @@
 <div class="container">
   <div id="blocklyDiv"></div>
   <div id="codeSide">
-    <h3>📄 CÓDIGO ARDUINO (SEM VAR)</h3>
-    <textarea id="outputCode" readonly placeholder="Monte seu jogo aqui..."></textarea>
+    <h3>📄 CÓDIGO MULTI-JOGO</h3>
+    <textarea id="outputCode" readonly></textarea>
   </div>
 </div>
 
 <xml id="toolbox" style="display: none">
-  <category name="Lógica" colour="210">
+  <category name="Sistema/Menu" colour="20">
     <block type="controls_if"></block>
     <block type="logic_compare"></block>
-    <block type="logic_operation"></block>
+    <block type="nano_set_state"></block>
+    <block type="nano_get_state"></block>
   </category>
   <category name="Variáveis" colour="330" custom="VARIABLE"></category>
   <category name="Matemática" colour="230">
@@ -59,90 +60,73 @@
   </category>
   <category name="Texto" colour="160"><block type="text"></block></category>
   <sep></sep>
-  <category name="👾 NanoBoy" colour="160">
+  <category name="👾 Gráficos" colour="160">
     <block type="nano_draw_rect"></block>
     <block type="nano_draw_text"></block>
-    <block type="nano_btn_pressed"></block>
     <block type="nano_clear"></block>
   </category>
-  <category name="🔊 Som" colour="345">
-    <block type="nano_beep"></block>
+  <category name="🎮 Controles" colour="160">
+    <block type="nano_btn_pressed"></block>
   </category>
 </xml>
 
 <script>
-// --- 1. DEFINIÇÃO DOS BLOCOS ---
+// --- 1. BLOCOS DE SISTEMA ---
 Blockly.defineBlocksWithJsonArray([
+  { "type": "nano_set_state", "message0": "Mudar para o Jogo: %1", "args0": [{ "type": "input_value", "name": "STATE" }], "previousStatement": null, "nextStatement": null, "colour": 20 },
+  { "type": "nano_get_state", "message0": "ID do Jogo Atual", "output": "Number", "colour": 20 },
   { "type": "nano_draw_rect", "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
   { "type": "nano_draw_text", "message0": "Escrever %1 em X: %2 Y: %3", "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
-  { "type": "nano_btn_pressed", "message0": "Botão %1 pressionado?", "args0": [{ "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esq (D3)", "3"], ["Dir (D4)", "4"]] }], "output": "Boolean", "colour": 160 },
-  { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 },
-  { "type": "nano_beep", "message0": "Beep %1", "args0": [{ "type": "field_dropdown", "name": "TYPE", "options": [["Pulo", "800"], ["Dano", "150"], ["Ponto", "1200"]] }], "previousStatement": null, "nextStatement": null, "colour": 345 }
+  { "type": "nano_btn_pressed", "message0": "Botão %1 pressionado?", "args0": [{ "type": "field_dropdown", "name": "PIN", "options": [["Ação (D2)", "2"], ["Esq (D3)", "3"], ["Dir (D4)", "4"]] }], "output": "Boolean", "colour": 160 },
+  { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 }
 ]);
 
-// --- 2. GERADOR C++ (O SEGREDO DO "FIX") ---
 const generator = javascript.javascriptGenerator;
 
-// ESSA FUNÇÃO MATA O "VAR" DEFINITIVAMENTE
+// --- 2. TRADUTORES (FIXED) ---
 generator.init = function(workspace) {
   generator.nameDB_ = new Blockly.Names(generator.variableDB_ ? generator.variableDB_.getNameType() : '');
   generator.nameDB_.setVariableMap(workspace.getVariableMap());
-  // Limpa a lista de definições para não injetar lixo JS
   generator.definitions_ = Object.create(null);
 };
 
-// Tradutor de nomes de variáveis (Pega o nome real, não o ID)
-generator.forBlock['variables_get'] = function(block) {
-  return [workspace.getVariableById(block.getFieldValue('VAR')).name, 0];
+generator.forBlock['nano_set_state'] = function(block, gen) {
+  return "estado = " + (gen.valueToCode(block, 'STATE', 0) || '0') + ";\n";
 };
 
-generator.forBlock['variables_set'] = function(block, gen) {
-  const varName = workspace.getVariableById(block.getFieldValue('VAR')).name;
-  const val = gen.valueToCode(block, 'VALUE', 0) || '0';
-  return varName + ' = ' + val + ';\n';
+generator.forBlock['nano_get_state'] = function() { return ["estado", 0]; };
+generator.forBlock['variables_get'] = function(block) { return [workspace.getVariableById(block.getFieldValue('VAR')).name, 0]; };
+generator.forBlock['variables_set'] = function(block, gen) { return workspace.getVariableById(block.getFieldValue('VAR')).name + ' = ' + (gen.valueToCode(block, 'VALUE', 0) || '0') + ';\n'; };
+generator.forBlock['math_number'] = function(block) { return [block.getFieldValue('NUM'), 0]; };
+generator.forBlock['math_arithmetic'] = function(block, gen) {
+    const ops = { 'ADD': '+', 'MINUS': '-', 'MULTIPLY': '*', 'DIVIDE': '/' };
+    const op = ops[block.getFieldValue('OP')];
+    const a = gen.valueToCode(block, 'A', 0) || '0';
+    const b = gen.valueToCode(block, 'B', 0) || '0';
+    return [`(${a} ${op} ${b})`, 0];
 };
-
-// Geradores de Hardware
-generator.forBlock['nano_draw_rect'] = function(block, gen) {
-  return `d.fillRect(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}, ${gen.valueToCode(block, 'W', 0) || 4}, ${gen.valueToCode(block, 'H', 0) || 4}, WHITE);\n`;
-};
-
-generator.forBlock['nano_draw_text'] = function(block, gen) {
-  return `d.setCursor(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}); d.print(${gen.valueToCode(block, 'TXT', 0) || '""'});\n`;
-};
-
-generator.forBlock['nano_btn_pressed'] = function(block) {
-  return [`(digitalRead(${block.getFieldValue('PIN')}) == LOW)`, 0];
-};
-
-generator.forBlock['nano_beep'] = function(block) {
-  return `tone(5, ${block.getFieldValue('TYPE')}, 50);\n`;
-};
-
+generator.forBlock['nano_draw_rect'] = function(block, gen) { return `d.fillRect(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}, ${gen.valueToCode(block, 'W', 0) || 4}, ${gen.valueToCode(block, 'H', 0) || 4}, WHITE);\n`; };
+generator.forBlock['nano_draw_text'] = function(block, gen) { return `d.setCursor(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}); d.print(${gen.valueToCode(block, 'TXT', 0) || '""'});\n`; };
+generator.forBlock['nano_btn_pressed'] = function(block) { return [`(digitalRead(${block.getFieldValue('PIN')}) == LOW)`, 0]; };
 generator.forBlock['nano_clear'] = function() { return `d.clearDisplay();\n`; };
-generator.forBlock['math_random_int'] = function(block, gen) {
-  return [`random(${gen.valueToCode(block, 'FROM', 0) || 0}, ${gen.valueToCode(block, 'TO', 0) || 100} + 1)`, 0];
-};
 generator.forBlock['text'] = function(block) { return ["\"" + block.getFieldValue('TEXT') + "\"", 0]; };
 
-// --- 3. INICIALIZAÇÃO ---
+// --- 3. EXPORTAÇÃO ---
 const workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox'), theme: 'dark' });
 
 function exportarCodigo() {
   const vars = workspace.getAllVariables();
   let vDecl = vars.map(v => `int ${v.name} = 0;`).join('\n');
-  
-  // Gera apenas a lógica limpa
-  const rawCode = generator.workspaceToCode(workspace);
-  
-  // Filtra qualquer 'var' que tenha sobrado por acidente
-  const cleanCode = rawCode.replace(/var /g, "");
+  let rawCode = generator.workspaceToCode(workspace).replace(/var /g, "");
 
-  document.getElementById('outputCode').value = `// NanoBoy v10 - Fixed Engine
+  document.getElementById('outputCode').value = `// NanoBoy v11 - Multi-Game System
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
 
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
+
+// ESTADO DO SISTEMA (0 = MENU, 1+ = JOGOS)
+int estado = 0;
 
 // VARIÁVEIS GLOBAIS
 ${vDecl}
@@ -153,25 +137,25 @@ void setup() {
   pinMode(2, INPUT_PULLUP);
   pinMode(3, INPUT_PULLUP);
   pinMode(4, INPUT_PULLUP);
-  pinMode(5, OUTPUT);
 }
 
 void loop() {
   d.clearDisplay();
   
-  ${cleanCode}
+  ${rawCode}
 
   d.display();
   delay(20);
-}`;
+}
+`;
 }
 
-// --- 4. FUNÇÕES DE ARQUIVO ---
+// --- SAVE/LOAD ---
 function salvarProjeto() {
   const xml = Blockly.Xml.workspaceToDom(workspace);
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([Blockly.Xml.domToPrettyText(xml)], {type: "text/xml"}));
-  a.download = "projeto_nanoboy.xml";
+  a.download = "multigame_nanoboy.xml";
   a.click();
 }
 
