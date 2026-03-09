@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>NanoBoy Universal Maker v6</title>
+  <title>NanoBoy Universal Maker v7</title>
   
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed"></script>
@@ -13,39 +13,40 @@
     :root { --main: #00ff88; --bg: #121212; --panel: #1e1e1e; }
     body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     
-    header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
+    header { background: var(--panel); padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     
     .container { display: flex; flex: 1; overflow: hidden; }
     #blocklyDiv { flex: 3; }
     
-    #codeSide { flex: 1; background: #181818; padding: 20px; display: flex; flex-direction: column; border-left: 2px solid #333; }
-    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 11px; padding: 15px; border: 1px solid #444; border-radius: 4px; resize: none; outline: none; }
+    #codeSide { flex: 1.2; background: #181818; padding: 20px; display: flex; flex-direction: column; border-left: 2px solid #333; }
+    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; padding: 15px; border: 1px solid #444; border-radius: 4px; resize: none; outline: none; line-height: 1.4; }
     
-    .btn-group { display: flex; gap: 8px; }
-    .btn { background: var(--main); color: black; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 12px; }
+    .btn-group { display: flex; gap: 10px; }
+    .btn { background: var(--main); color: black; border: none; padding: 10px 18px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 12px; transition: 0.3s; text-transform: uppercase; }
+    .btn:hover { background: #00cc6e; transform: scale(1.02); }
     .btn-sec { background: #444; color: white; }
-    h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--main); }
+    h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--main); letter-spacing: 1px; }
   </style>
 </head>
 <body>
 
 <header>
-  <div style="display:flex; align-items:center; gap:10px;">
-    <span style="font-size: 24px;">🕹️</span>
-    <h2 style="margin:0; font-size: 18px;">NanoBoy Maker</h2>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span style="font-size: 28px;">🎮</span>
+    <h2 style="margin:0; font-size: 20px; letter-spacing: 1px;">NanoBoy Maker</h2>
   </div>
   <div class="btn-group">
     <button class="btn btn-sec" onclick="salvarProjeto()">💾 Salvar</button>
     <button class="btn btn-sec" onclick="abrirProjeto()">📂 Abrir</button>
-    <button class="btn" onclick="exportarCodigo()">🚀 Gerar Código</button>
+    <button class="btn" onclick="exportarCodigo()">🚀 Gerar Código C++</button>
   </div>
 </header>
 
 <div class="container">
   <div id="blocklyDiv"></div>
   <div id="codeSide">
-    <h3>📄 Saída C++</h3>
-    <textarea id="outputCode" readonly placeholder="Monte sua lógica e gere o código..."></textarea>
+    <h3>📄 CÓDIGO FINAL (ARDUINO NANO)</h3>
+    <textarea id="outputCode" readonly placeholder="Monte seu jogo e clique em Gerar..."></textarea>
   </div>
 </div>
 
@@ -69,7 +70,7 @@
     <block type="text"></block>
   </category>
   <sep></sep>
-  <category name="👾 NanoBoy" colour="160">
+  <category name="🕹️ NanoBoy Hardware" colour="160">
     <block type="nano_draw_rect"></block>
     <block type="nano_draw_text"></block>
     <block type="nano_btn_pressed"></block>
@@ -78,55 +79,87 @@
 </xml>
 
 <script>
-// --- 1. DEFINIÇÃO DOS BLOCOS ---
+// --- 1. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS ---
 Blockly.defineBlocksWithJsonArray([
   { "type": "nano_draw_rect", "message0": "Desenhar Retângulo X: %1 Y: %2 L: %3 A: %4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
-  { "type": "nano_draw_text", "message0": "Texto %1 em X: %2 Y: %3", "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nano_draw_text", "message0": "Escrever %1 em X: %2 Y: %3", "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
   { "type": "nano_btn_pressed", "message0": "Botão %1 pressionado?", "args0": [{ "type": "field_dropdown", "name": "PIN", "options": [["Pulo (D2)", "2"], ["Esq (D3)", "3"], ["Dir (D4)", "4"]] }], "output": "Boolean", "colour": 160 },
   { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 }
 ]);
 
-// --- 2. CONFIGURAÇÃO DO GERADOR ---
+// --- 2. CONFIGURAÇÃO DO GERADOR C++ (CORREÇÃO DE NOMES E VARS) ---
 const generator = javascript.javascriptGenerator;
+
+// Impedir o mangling (nomes estranhos) das variáveis
+generator.forBlock['variables_get'] = function(block) {
+  const varId = block.getFieldValue('VAR');
+  const varName = workspace.getVariableById(varId).name;
+  return [varName, 0];
+};
+
+generator.forBlock['variables_set'] = function(block, gen) {
+  const varId = block.getFieldValue('VAR');
+  const varName = workspace.getVariableById(varId).name;
+  const val = gen.valueToCode(block, 'VALUE', 0) || '0';
+  return varName + ' = ' + val + ';\n';
+};
 
 generator.forBlock['text'] = function(block) {
   return ["\"" + block.getFieldValue('TEXT') + "\"", 0];
 };
 
-generator.forBlock['variables_get'] = function(block) { return [block.getFieldValue('VAR'), 0]; };
-generator.forBlock['variables_set'] = function(block, gen) {
-  var val = gen.valueToCode(block, 'VALUE', 0) || '0';
-  return block.getFieldValue('VAR') + ' = ' + val + ';\n';
-};
-
 generator.forBlock['nano_draw_rect'] = function(block, gen) {
-  return `d.fillRect(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}, ${gen.valueToCode(block, 'W', 0) || 4}, ${gen.valueToCode(block, 'H', 0) || 4}, WHITE);\n`;
+  const x = gen.valueToCode(block, 'X', 0) || '0';
+  const y = gen.valueToCode(block, 'Y', 0) || '0';
+  const w = gen.valueToCode(block, 'W', 0) || '4';
+  const h = gen.valueToCode(block, 'H', 0) || '4';
+  return `d.fillRect(${x}, ${y}, ${w}, ${h}, WHITE);\n`;
 };
 
 generator.forBlock['nano_draw_text'] = function(block, gen) {
-  return `d.setCursor(${gen.valueToCode(block, 'X', 0) || 0}, ${gen.valueToCode(block, 'Y', 0) || 0}); d.print(${gen.valueToCode(block, 'TXT', 0) || '""'});\n`;
+  const txt = gen.valueToCode(block, 'TXT', 0) || '""';
+  const x = gen.valueToCode(block, 'X', 0) || '0';
+  const y = gen.valueToCode(block, 'Y', 0) || '0';
+  return `d.setCursor(${x}, ${y}); d.print(${txt});\n`;
 };
 
-generator.forBlock['nano_btn_pressed'] = function(block) { return [`(digitalRead(${block.getFieldValue('PIN')}) == LOW)`, 0]; };
-generator.forBlock['nano_clear'] = function() { return `d.clearDisplay();\n`; };
+generator.forBlock['nano_btn_pressed'] = function(block) {
+  return [`(digitalRead(${block.getFieldValue('PIN')}) == LOW)`, 0];
+};
+
+generator.forBlock['nano_clear'] = function() {
+  return `d.clearDisplay();\n`;
+};
 
 // --- 3. INICIALIZAÇÃO ---
-const workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox'), theme: 'dark' });
+const workspace = Blockly.inject('blocklyDiv', {
+  toolbox: document.getElementById('toolbox'),
+  theme: 'dark',
+  grid: { spacing: 20, length: 3, colour: '#333', snap: true }
+});
 
+// --- 4. FUNÇÃO DE EXPORTAÇÃO ---
 function exportarCodigo() {
   const vars = workspace.getAllVariables();
-  let vDecl = vars.map(v => `int ${v.name} = 0;`).join('\n');
-  const code = generator.workspaceToCode(workspace);
+  // Declara variáveis no topo como INT
+  let declaracoes = vars.map(v => `int ${v.name} = 0;`).join('\n');
   
-  document.getElementById('outputCode').value = `
+  // Gera o código dos blocos (sem var/typeof)
+  let blockCode = generator.workspaceToCode(workspace);
+  
+  const template = `// Gerado por NanoBoy Engine
 #include <Adafruit_SSD1306.h>
+#include <Wire.h>
+
 Adafruit_SSD1306 d(128, 64, &Wire, -1);
 
-${vDecl}
+// --- VARIÁVEIS DO JOGO ---
+${declaracoes}
 
 void setup() {
   d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   d.setTextColor(WHITE);
+  d.setTextSize(1);
   pinMode(2, INPUT_PULLUP);
   pinMode(3, INPUT_PULLUP);
   pinMode(4, INPUT_PULLUP);
@@ -134,20 +167,25 @@ void setup() {
 
 void loop() {
   d.clearDisplay();
-  ${code}
+  
+  // --- LÓGICA DO JOGO ---
+${blockCode}
+  // --- FIM DA LÓGICA ---
+
   d.display();
   delay(20);
 }`;
+  
+  document.getElementById('outputCode').value = template;
 }
 
-// --- 4. FUNÇÕES DE SAVE/LOAD ---
+// --- 5. SISTEMA DE SAVE/LOAD ---
 function salvarProjeto() {
   const xml = Blockly.Xml.workspaceToDom(workspace);
-  const xmlText = Blockly.Xml.domToPrettyText(xml);
-  const blob = new Blob([xmlText], {type: "text/xml"});
+  const blob = new Blob([Blockly.Xml.domToPrettyText(xml)], {type: "text/xml"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "projeto_nanoboy.xml";
+  a.download = "meujogo_nanoboy.xml";
   a.click();
 }
 
@@ -155,14 +193,12 @@ function abrirProjeto() {
   const input = document.createElement('input');
   input.type = 'file';
   input.onchange = e => {
-    const file = e.target.files[0];
     const reader = new FileReader();
-    reader.onload = e => {
-      const xml = Blockly.utils.xml.textToDom(e.target.result);
+    reader.onload = ev => {
       workspace.clear();
-      Blockly.Xml.domToWorkspace(xml, workspace);
+      Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(ev.target.result), workspace);
     };
-    reader.readAsText(file);
+    reader.readAsText(e.target.files[0]);
   };
   input.click();
 }
