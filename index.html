@@ -1,293 +1,145 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Arduino Game Studio</title>
 
+<title>Arduino Game Maker</title>
 <script src="https://unpkg.com/blockly/blockly.min.js"></script>
 
 <style>
 
 body{
 font-family:Arial;
-background:#0f0f0f;
-color:white;
 margin:0;
-}
-
-header{
-background:#1f1f1f;
-padding:10px;
 display:flex;
-gap:10px;
-align-items:center;
+height:100vh;
 }
 
-#gameList{
-width:220px;
-background:#181818;
-height:calc(100vh - 50px);
-overflow:auto;
+#games{
+width:200px;
+background:#222;
+color:white;
 padding:10px;
-}
-
-#editor{
-flex:1;
-display:flex;
-flex-direction:column;
 }
 
 #blocklyDiv{
 flex:1;
-background:white;
-}
-
-#codigo{
-height:200px;
-background:#000;
-color:#0f0;
-overflow:auto;
-padding:10px;
-}
-
-.container{
-display:flex;
+height:100%;
 }
 
 button{
-padding:8px;
-cursor:pointer;
-}
-
-.gameItem{
-background:#333;
-padding:8px;
-margin:5px 0;
-cursor:pointer;
+width:100%;
+margin-top:5px;
 }
 
 </style>
+
 </head>
 
 <body>
 
-<header>
+<div id="games">
 
-<button onclick="novoJogo()">Novo Jogo</button>
-<button onclick="novoLevel()">Novo Level</button>
-<button onclick="gerarCodigo()">Gerar Código Arduino</button>
+<h3>Jogos</h3>
 
-</header>
+<div id="lista"></div>
 
-<div class="container">
-
-<div id="gameList">
-
-<h3>Jogos / Levels</h3>
-
-<div id="games"></div>
+<button onclick="novoJogo()">Novo jogo</button>
+<button onclick="novoLevel()">Novo level</button>
+<button onclick="gerar()">Gerar código</button>
 
 </div>
-
-<div id="editor">
 
 <div id="blocklyDiv"></div>
 
-<pre id="codigo"></pre>
-
-</div>
-
-</div>
-
 <xml id="toolbox" style="display:none">
 
-<category name="Controle">
-
+<category name="Jogo">
 <block type="controls_if"></block>
 <block type="controls_repeat_ext"></block>
-
-</category>
-
-<category name="Lógica">
-
-<block type="logic_compare"></block>
-<block type="logic_operation"></block>
-<block type="logic_boolean"></block>
-
 </category>
 
 <category name="Matemática">
-
 <block type="math_number"></block>
-<block type="math_arithmetic"></block>
-
-</category>
-
-<category name="Arduino">
-
-<block type="delay_block"></block>
-<block type="digital_write"></block>
-
-</category>
-
-<category name="Jogos">
-
-<block type="player_move"></block>
-<block type="check_collision"></block>
-
 </category>
 
 </xml>
 
 <script>
 
-var workspace = Blockly.inject('blocklyDiv',
-{toolbox: document.getElementById('toolbox')});
-
-let jogos = [];
-let jogoAtual = null;
-
-function atualizarLista(){
-
-let div = document.getElementById("games");
-div.innerHTML="";
-
-jogos.forEach((g,i)=>{
-
-let item=document.createElement("div");
-item.className="gameItem";
-item.innerText="ID "+g.id+" - "+g.nome;
-
-item.onclick=()=>carregarJogo(i);
-
-div.appendChild(item);
-
+var workspace = Blockly.inject('blocklyDiv',{
+toolbox: document.getElementById('toolbox')
 });
 
-}
+let jogos=[];
+let atual=null;
 
 function novoJogo(){
 
 let nome=prompt("Nome do jogo");
-let id=jogos.length;
 
-jogos.push({id:id,nome:nome,xml:null});
+jogos.push({
+nome:nome,
+levels:[]
+});
 
-atualizarLista();
+atual=jogos.length-1;
+
+update();
 
 }
 
 function novoLevel(){
 
+if(atual==null)return;
+
 let nome=prompt("Nome do level");
-let id=jogos.length;
 
-jogos.push({id:id,nome:nome,xml:null});
+jogos[atual].levels.push(nome);
 
-atualizarLista();
-
-}
-
-function carregarJogo(i){
-
-jogoAtual=i;
-
-workspace.clear();
-
-if(jogos[i].xml){
-
-let xml=Blockly.Xml.textToDom(jogos[i].xml);
-Blockly.Xml.domToWorkspace(xml,workspace);
+update();
 
 }
 
-}
+function update(){
 
-workspace.addChangeListener(()=>{
+let div=document.getElementById("lista");
 
-if(jogoAtual!=null){
+div.innerHTML="";
 
-let xml=Blockly.Xml.workspaceToDom(workspace);
-jogos[jogoAtual].xml=Blockly.Xml.domToText(xml);
+jogos.forEach((g,i)=>{
 
-}
+let e=document.createElement("div");
+
+e.innerText=g.nome;
+
+e.onclick=()=>{atual=i};
+
+div.appendChild(e);
 
 });
 
-function gerarCodigo(){
+}
 
-let codigo="int gameID=0;\n\n";
+function gerar(){
 
-jogos.forEach(g=>{
+let codigo="";
 
-codigo+="void game"+g.id+"(){\n";
+jogos.forEach((g,i)=>{
 
-codigo+="// lógica do jogo\n";
+g.levels.forEach((l,j)=>{
 
-codigo+="}\n\n";
+codigo+="void "+g.nome+"_"+l+"(){}\n";
 
 });
 
-codigo+="void loop(){\n";
-
-codigo+="switch(gameID){\n";
-
-jogos.forEach(g=>{
-
-codigo+="case "+g.id+": game"+g.id+"(); break;\n";
-
 });
 
-codigo+="}\n}\n";
-
-document.getElementById("codigo").textContent=codigo;
+alert(codigo);
 
 }
-
-Blockly.Blocks['delay_block']={
-init:function(){
-this.appendDummyInput()
-.appendField("delay ms")
-.appendField(new Blockly.FieldNumber(100),"TIME");
-this.setPreviousStatement(true);
-this.setNextStatement(true);
-this.setColour(160);
-}
-};
-
-Blockly.Blocks['digital_write']={
-init:function(){
-this.appendDummyInput()
-.appendField("digitalWrite pin")
-.appendField(new Blockly.FieldNumber(13),"PIN")
-.appendField("state")
-.appendField(new Blockly.FieldDropdown([["HIGH","HIGH"],["LOW","LOW"]]),"STATE");
-this.setPreviousStatement(true);
-this.setNextStatement(true);
-this.setColour(160);
-}
-};
-
-Blockly.Blocks['player_move']={
-init:function(){
-this.appendDummyInput()
-.appendField("mover jogador");
-this.setPreviousStatement(true);
-this.setNextStatement(true);
-this.setColour(200);
-}
-};
-
-Blockly.Blocks['check_collision']={
-init:function(){
-this.appendDummyInput()
-.appendField("checar colisão");
-this.setOutput(true);
-this.setColour(200);
-}
-};
 
 </script>
 
 </body>
+
 </html>
