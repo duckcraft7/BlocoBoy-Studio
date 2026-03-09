@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>NanoBoy OS Maker v15</title>
+  <title>NanoBoy OS Creator v17</title>
   
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed"></script>
@@ -10,146 +10,139 @@
   <script src="https://unpkg.com/blockly/msg/pt-br.js"></script>
 
   <style>
-    :root { --main: #00ff88; --bg: #0a0a0a; --panel: #161616; }
-    body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    
-    header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--main); }
-    
+    :root { --main: #00ff88; --bg: #050505; --panel: #111; }
+    body { background: var(--bg); color: white; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header { background: var(--panel); padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--main); }
     .main-container { display: flex; flex: 1; overflow: hidden; }
     
-    /* Sidebar */
-    #sidebar { width: 230px; background: #111; border-right: 1px solid #333; padding: 15px; display: flex; flex-direction: column; }
-    .project-item { padding: 12px; background: #1e1e1e; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; display: flex; justify-content: space-between; font-size: 13px; }
-    .project-active { border-color: var(--main); background: #252525; color: var(--main); font-weight: bold; }
+    /* Sidebar Projetos */
+    #sidebar { width: 220px; background: #0a0a0a; border-right: 1px solid #222; padding: 15px; display: flex; flex-direction: column; }
+    .project-item { padding: 10px; background: #151515; margin-bottom: 5px; border-radius: 4px; cursor: pointer; border: 1px solid #222; font-size: 12px; }
+    .project-active { border-color: var(--main); background: #1a1a1a; color: var(--main); box-shadow: 0 0 5px var(--main); }
 
-    /* Área Central */
-    #editorContainer { flex: 1; display: flex; flex-direction: column; position: relative; }
-    #tabIndicator { background: #222; padding: 5px 20px; font-size: 12px; color: var(--main); border-bottom: 1px solid #333; text-transform: uppercase; }
-    #blocklyDiv { flex: 1; width: 100%; }
+    #editorArea { flex: 1; display: flex; flex-direction: column; background: #080808; }
+    #tabName { background: #111; padding: 5px 15px; font-size: 11px; color: #555; border-bottom: 1px solid #222; }
+    #blocklyDiv { flex: 1; }
     
-    /* Código */
-    #codeSide { width: 380px; background: #111; border-left: 1px solid #333; padding: 15px; display: flex; flex-direction: column; }
-    textarea { flex: 1; background: #000; color: #00ff88; font-family: 'Consolas', monospace; font-size: 11px; padding: 10px; border: 1px solid #333; border-radius: 4px; resize: none; outline: none; }
+    #codeSide { width: 360px; background: #0a0a0a; padding: 15px; border-left: 1px solid #222; display: flex; flex-direction: column; }
+    textarea { flex: 1; background: #000; color: var(--main); font-family: 'Consolas', monospace; font-size: 11px; padding: 10px; border: 1px solid #222; resize: none; outline: none; }
     
-    .btn { background: var(--main); color: black; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 11px; }
-    input { background: #000; color: white; border: 1px solid #333; padding: 8px; margin-bottom: 10px; width: 80%; border-radius: 4px; }
-    .btn-del { background: #ff4757; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+    .btn { background: var(--main); color: #000; border: none; padding: 6px 12px; font-weight: bold; cursor: pointer; border-radius: 2px; font-size: 11px; }
+    input { background: #000; color: #fff; border: 1px solid #333; padding: 6px; margin-bottom: 10px; width: 85%; }
   </style>
 </head>
 <body>
 
 <header>
   <div style="display:flex; align-items:center; gap:10px;">
-    <span>🕹️</span>
-    <h2 style="margin:0; font-size: 16px;">NanoBoy Multi-Engine</h2>
+    <h2 style="margin:0; font-size: 16px; letter-spacing: 2px;">NANOBOY_v17</h2>
   </div>
-  <div style="display:flex; gap:10px;">
-    <button class="btn" style="background:#444; color:white;" onclick="baixarXML()">📥 Salvar XML</button>
-    <button class="btn" onclick="gerarCodigoOS()">🚀 Gerar Código Final</button>
+  <div style="display:flex; gap:8px;">
+    <button class="btn" style="background:#333; color:#fff;" onclick="salvarXML()">💾 SALVAR JOGO</button>
+    <button class="btn" onclick="gerarCodigoOS()">🚀 GERAR C++ FINAL</button>
   </div>
 </header>
 
 <div class="main-container">
   <div id="sidebar">
-    <h3 style="font-size:11px; color:#666;">JOGOS NO SISTEMA</h3>
-    <input type="text" id="projName" placeholder="Nome do Jogo...">
-    <button class="btn" onclick="novoProjeto()">+ Criar Novo Jogo</button>
-    <div id="projectList" style="margin-top:20px;"></div>
+    <h3>ABAS_JOGOS</h3>
+    <input type="text" id="projName" placeholder="Novo Jogo/Fase...">
+    <button class="btn" onclick="novoProjeto()">+ ADICIONAR</button>
+    <div id="projectList" style="margin-top: 15px;"></div>
   </div>
 
-  <div id="editorContainer">
-    <div id="tabIndicator">A editar: <span id="curName">Menu</span></div>
+  <div id="editorArea">
+    <div id="tabName">PROJETO ATIVO: <span id="curName" style="color:#fff">Menu</span></div>
     <div id="blocklyDiv"></div>
   </div>
 
   <div id="codeSide">
-    <h3 style="font-size:11px; color:#666;">C++ CONSOLIDADO</h3>
+    <h3>C++_OUTPUT</h3>
     <textarea id="outputCode" readonly></textarea>
   </div>
 </div>
 
 <xml id="toolbox" style="display: none">
-  <category name="Sistema" colour="20">
-    <block type="nano_set_state"></block>
+  <category name="🔄 FLUXO" colour="20">
     <block type="controls_if"></block>
+    <block type="nano_set_state"></block>
+    <block type="nano_delay"></block>
+  </category>
+  <category name="📊 DADOS" colour="330" custom="VARIABLE"></category>
+  <category name="🔢 MATEMATICA" colour="230">
+    <block type="math_number"></block>
+    <block type="math_arithmetic"></block>
+    <block type="math_random_int"></block>
     <block type="logic_compare"></block>
   </category>
-  <category name="Variáveis" colour="330" custom="VARIABLE"></category>
-  <category name="Hardware" colour="160">
+  <category name="🎨 ARTE" colour="160">
     <block type="nano_draw_rect"></block>
+    <block type="nano_draw_wall"></block>
     <block type="nano_draw_text"></block>
-    <block type="nano_btn_pressed"></block>
     <block type="nano_clear"></block>
-    <block type="math_number"></block>
     <block type="text"></block>
+  </category>
+  <category name="🎮 COMANDO" colour="160">
+    <block type="nano_btn_pressed"></block>
+    <block type="nano_check_pixel"></block>
+    <block type="nano_beep"></block>
   </category>
 </xml>
 
 <script>
-// --- MOTOR DE PROJETOS ---
-let projetos = {
-    "Menu": { xml: '<xml xmlns="https://developers.google.com/blockly/xml"></xml>', id: 0 }
-};
+let projetos = { "Menu": { xml: '<xml></xml>', id: 0 } };
 let projetoAtivo = "Menu";
 
-// --- BLOCOS ---
+// --- NOVOS BLOCOS CUSTOMIZADOS ---
 Blockly.defineBlocksWithJsonArray([
-  { "type": "nano_set_state", "message0": "Ir para Jogo ID: %1", "args0": [{ "type": "input_value", "name": "ST" }], "previousStatement": null, "nextStatement": null, "colour": 20 },
-  { "type": "nano_draw_rect", "message0": "Ret X:%1 Y:%2 L:%3 A:%4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nano_set_state", "message0": "Mudar para Estado/Fase: %1", "args0": [{ "type": "input_value", "name": "ST" }], "previousStatement": null, "nextStatement": null, "colour": 20 },
+  { "type": "nano_delay", "message0": "Esperar %1 ms", "args0": [{ "type": "input_value", "name": "MS" }], "previousStatement": null, "nextStatement": null, "colour": 20 },
+  { "type": "nano_draw_rect", "message0": "Desenhar Player X:%1 Y:%2", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nano_draw_wall", "message0": "Parede X:%1 Y:%2 L:%3 A:%4", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }, { "type": "input_value", "name": "W" }, { "type": "input_value", "name": "H" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
   { "type": "nano_draw_text", "message0": "Texto %1 em X:%2 Y:%3", "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "previousStatement": null, "nextStatement": null, "colour": 160 },
-  { "type": "nano_btn_pressed", "message0": "Botão %1?", "args0": [{ "type": "field_dropdown", "name": "P", "options": [["2", "2"], ["3", "3"], ["4", "4"]] }], "output": "Boolean", "colour": 160 },
-  { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 }
+  { "type": "nano_btn_pressed", "message0": "Botão %1?", "args0": [{ "type": "field_dropdown", "name": "P", "options": [["Pulo/Ação (2)", "2"], ["Esquerda (3)", "3"], ["Direita (4)", "4"]] }], "output": "Boolean", "colour": 160 },
+  { "type": "nano_check_pixel", "message0": "Tem algo no X:%1 Y:%2?", "args0": [{ "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }], "output": "Boolean", "colour": 160 },
+  { "type": "nano_clear", "message0": "Limpar Tela", "previousStatement": null, "nextStatement": null, "colour": 160 },
+  { "type": "nano_beep", "message0": "Beep Freq:%1", "args0": [{ "type": "input_value", "name": "F" }], "previousStatement": null, "nextStatement": null, "colour": 160 }
 ]);
 
 const gen = javascript.javascriptGenerator;
-gen.init = function(w) { 
-    gen.nameDB_ = new Blockly.Names(gen.variableDB_ ? gen.variableDB_.getNameType() : '');
-    gen.nameDB_.setVariableMap(w.getVariableMap());
-    gen.definitions_ = Object.create(null); 
-};
+gen.init = function(w) { gen.nameDB_ = new Blockly.Names(); gen.definitions_ = Object.create(null); };
 
+// --- TRADUTORES C++ ---
 gen.forBlock['variables_get'] = function(b) { return [workspace.getVariableById(b.getFieldValue('VAR')).name, 0]; };
 gen.forBlock['variables_set'] = function(b, g) { return workspace.getVariableById(b.getFieldValue('VAR')).name + ' = ' + (g.valueToCode(b, 'VALUE', 0) || '0') + ';\n'; };
 gen.forBlock['nano_set_state'] = function(b, g) { return "estado = " + (g.valueToCode(b, 'ST', 0) || '0') + ";\n"; };
-gen.forBlock['nano_draw_rect'] = function(b, g) { return `d.fillRect(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}, ${g.valueToCode(b, 'W', 0) || 4}, ${g.valueToCode(b, 'H', 0) || 4}, WHITE);\n`; };
-gen.forBlock['nano_draw_text'] = function(b, g) { return `d.setCursor(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}); d.print(${g.valueToCode(b, 'TXT', 0) || '""'});\n`; };
+gen.forBlock['nano_delay'] = function(b, g) { return "delay(" + (g.valueToCode(b, 'MS', 0) || '0') + ");\n"; };
+gen.forBlock['nano_draw_rect'] = function(b, g) { return `d.fillRect(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}, 6, 6, WHITE);\n`; };
+gen.forBlock['nano_draw_wall'] = function(b, g) { return `d.fillRect(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}, ${g.valueToCode(b, 'W', 0) || 10}, ${g.valueToCode(b, 'H', 0) || 10}, WHITE);\n`; };
+gen.forBlock['nano_check_pixel'] = function(b, g) { return [`d.getPixel(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0})`, 0]; };
 gen.forBlock['nano_btn_pressed'] = function(b) { return [`(digitalRead(${b.getFieldValue('P')}) == LOW)`, 0]; };
+gen.forBlock['nano_draw_text'] = function(b, g) { return `d.setCursor(${g.valueToCode(b, 'X', 0) || 0}, ${g.valueToCode(b, 'Y', 0) || 0}); d.print(${g.valueToCode(b, 'TXT', 0) || '""'});\n`; };
 gen.forBlock['nano_clear'] = function() { return `d.clearDisplay();\n`; };
 gen.forBlock['math_number'] = function(b) { return [b.getFieldValue('NUM'), 0]; };
+gen.forBlock['math_random_int'] = function(b, g) { return [`random(${g.valueToCode(b, 'FROM', 0) || 0}, ${g.valueToCode(b, 'TO', 0) || 10} + 1)`, 0]; };
 gen.forBlock['text'] = function(b) { return ["\"" + b.getFieldValue('TEXT') + "\"", 0]; };
 
 const workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox'), theme: 'dark' });
 
-// --- LÓGICA DE TROCA DE ABA ---
+// --- GESTAO DE ABAS ---
 function carregarProjeto(nome) {
-    // 1. Salvar o XML do jogo que estamos a abandonar
-    const dom = Blockly.Xml.workspaceToDom(workspace);
-    projetos[projetoAtivo].xml = Blockly.Xml.domToText(dom);
-    
-    // 2. Trocar o nome ativo
+    projetos[projetoAtivo].xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
     projetoAtivo = nome;
     document.getElementById('curName').innerText = nome;
-    
-    // 3. Limpar o ecrã e injetar o XML do novo jogo
     workspace.clear();
-    const novoDom = Blockly.Xml.textToDom(projetos[nome].xml);
-    Blockly.Xml.domToWorkspace(novoDom, workspace);
-    
+    const xml = Blockly.Xml.textToDom(projetos[nome].xml);
+    Blockly.Xml.domToWorkspace(xml, workspace);
     renderList();
 }
 
 function novoProjeto() {
     const nome = document.getElementById('projName').value.trim();
-    if(!nome || projetos[nome]) return alert("Nome inválido ou já existe!");
-    
-    // Cria o novo projeto na lista
-    projetos[nome] = { 
-        xml: '<xml xmlns="https://developers.google.com/blockly/xml"></xml>', 
-        id: Object.keys(projetos).length 
-    };
-    
+    if(!nome || projetos[nome]) return;
+    projetos[nome] = { xml: '<xml></xml>', id: Object.keys(projetos).length };
     document.getElementById('projName').value = "";
-    carregarProjeto(nome); // Abre a aba nova automaticamente
+    carregarProjeto(nome);
 }
 
 function renderList() {
@@ -158,43 +151,40 @@ function renderList() {
     Object.keys(projetos).forEach(nome => {
         const div = document.createElement('div');
         div.className = `project-item ${projetoAtivo === nome ? 'project-active' : ''}`;
-        div.innerHTML = `<span>ID ${projetos[nome].id}: ${nome}</span>`;
+        div.innerHTML = `${nome} (ID ${projetos[nome].id})`;
         div.onclick = () => carregarProjeto(nome);
         list.appendChild(div);
     });
 }
 
 function gerarCodigoOS() {
-    // Salva o projeto atual antes de gerar tudo
-    const dom = Blockly.Xml.workspaceToDom(workspace);
-    projetos[projetoAtivo].xml = Blockly.Xml.domToText(dom);
-
-    let code = `// NanoBoy Modular OS\n#include <Adafruit_SSD1306.h>\n#include <Wire.h>\nAdafruit_SSD1306 d(128, 64, &Wire, -1);\nint estado = 0;\n`;
+    projetos[projetoAtivo].xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+    let code = `// NanoBoy OS v17\n#include <Adafruit_SSD1306.h>\nAdafruit_SSD1306 d(128, 64, &Wire, -1);\nint estado = 0;\n`;
     let vars = new Set();
-    let funcoes = "";
+    let funcs = "";
 
     Object.keys(projetos).forEach(nome => {
         const tWS = new Blockly.Workspace();
         Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(projetos[nome].xml), tWS);
         tWS.getAllVariables().forEach(v => vars.add(v.name));
         const c = gen.workspaceToCode(tWS).replace(/var /g, "");
-        funcoes += `void rodar_${nome.replace(/\s/g,'_')}() {\n${c}\n}\n\n`;
+        funcs += `void rodar_${nome.replace(/\s/g,'_')}() {\n${c}\n}\n\n`;
         tWS.dispose();
     });
 
     vars.forEach(v => code += `int ${v} = 0;\n`);
-    code += `\nvoid setup() {\n d.begin(SSD1306_SWITCHCAPVCC, 0x3C);\n d.setTextColor(WHITE);\n pinMode(2, INPUT_PULLUP);\n pinMode(3, INPUT_PULLUP);\n pinMode(4, INPUT_PULLUP);\n}\n\n${funcoes}`;
+    code += `\nvoid setup() {\n d.begin(SSD1306_SWITCHCAPVCC, 0x3C);\n d.setTextColor(WHITE);\n pinMode(2, INPUT_PULLUP);\n pinMode(3, INPUT_PULLUP);\n pinMode(4, INPUT_PULLUP);\n}\n\n${funcs}`;
     code += `void loop() {\n d.clearDisplay();\n switch(estado) {\n`;
     Object.keys(projetos).forEach(n => code += `  case ${projetos[n].id}: rodar_${n.replace(/\s/g,'_')}(); break;\n`);
     code += ` }\n d.display();\n delay(20);\n}`;
-
     document.getElementById('outputCode').value = code;
 }
 
-function baixarXML() {
+function salvarXML() {
     const xml = Blockly.Xml.domToPrettyText(Blockly.Xml.workspaceToDom(workspace));
+    const blob = new Blob([xml], {type: "text/xml"});
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([xml], {type: "text/xml"}));
+    a.href = URL.createObjectURL(blob);
     a.download = `${projetoAtivo}.xml`;
     a.click();
 }
