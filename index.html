@@ -2,198 +2,191 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NanoBoy Engine v2 - Com Preview e Colisão</title>
+    <title>NanoBoy Engine v3 - IA e Paredes</title>
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <style>
-        :root { --bg: #1a1a1a; --panel: #252526; --accent: #00ff88; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; }
-        
+        :root { --bg: #121212; --panel: #1e1e1e; --accent: #ff4757; --green: #2ed573; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { background: var(--panel); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; }
         .main { display: flex; flex: 1; }
-        #blocklyDiv { flex: 2; border-right: 2px solid #000; }
-        
-        /* Estilo do GameBoy Preview */
-        #preview-area { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #333; }
-        #screen-container { background: #99ad82; padding: 15px; border: 10px solid #555; border-radius: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        canvas { background: #99ad82; image-rendering: pixelated; border: 2px solid #7a8a68; width: 256px; height: 128px; }
-        
-        .controls { display: grid; grid-template-columns: repeat(3, 40px); gap: 5px; margin-top: 20px; }
-        .btn-ctrl { width: 40px; height: 40px; background: #444; border: none; color: white; border-radius: 5px; cursor: pointer; }
-        .btn-ctrl:active { background: var(--accent); color: black; }
-
-        .btn-action { padding: 10px 20px; background: var(--accent); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 10px; }
-        #codigo-box { width: 90%; height: 100px; background: #000; color: #0f0; font-family: monospace; font-size: 10px; margin-top: 10px; overflow: auto; padding: 10px; }
+        #blocklyDiv { flex: 2; border-right: 2px solid #333; }
+        #preview-area { flex: 1; padding: 20px; background: #252526; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        #screen-container { background: #8bac0f; padding: 10px; border: 8px solid #333; border-radius: 5px; }
+        canvas { background: #8bac0f; image-rendering: pixelated; width: 256px; height: 128px; border: 2px solid #306230; }
+        .controls { display: grid; grid-template-columns: repeat(3, 45px); gap: 5px; margin: 15px 0; }
+        .btn-ctrl { width: 45px; height: 45px; background: #333; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; }
+        .btn-action { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        #code-output { width: 100%; height: 120px; background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2>NanoBoy Engine 🕹️</h2>
-    <button class="btn-action" onclick="publicarJogo()">PUBLICAR</button>
+    <h2 style="margin:0; color: var(--green);">NanoBoy Engine v3 🕹️</h2>
+    <button class="btn-action" style="width:auto; background: var(--green);" onclick="publicar()">Publicar Jogo</button>
 </header>
 
 <div class="main">
     <div id="blocklyDiv"></div>
 
     <div id="preview-area">
-        <h3>Preview</h3>
         <div id="screen-container">
             <canvas id="gameCanvas" width="128" height="64"></canvas>
         </div>
-        
+
         <div class="controls">
-            <div></div><button class="btn-ctrl" onmousedown="setKey('up',true)" onmouseup="setKey('up',false)">▲</button><div></div>
-            <button class="btn-ctrl" onmousedown="setKey('left',true)" onmouseup="setKey('left',false)">◀</button>
-            <button class="btn-ctrl" onmousedown="setKey('down',true)" onmouseup="setKey('down',false)">▼</button>
-            <button class="btn-ctrl" onmousedown="setKey('right',true)" onmouseup="setKey('right',false)">▶</button>
+            <div></div><button class="btn-ctrl" onmousedown="k('u',1)" onmouseup="k('u',0)">▲</button><div></div>
+            <button class="btn-ctrl" onmousedown="k('l',1)" onmouseup="k('l',0)">◀</button>
+            <button class="btn-ctrl" onmousedown="k('d',1)" onmouseup="k('d',0)">▼</button>
+            <button class="btn-ctrl" onmousedown="k('r',1)" onmouseup="k('r',0)">▶</button>
         </div>
 
-        <button class="btn-action" onclick="startPreview()" style="background: #ffcc00;">▶ RODAR PREVIEW</button>
-        
-        <div id="codigo-box">Clique em gerar código...</div>
-        <button class="btn-action" onclick="gerarArduino()" style="background: #007bff; color: white;">GERAR CÓDIGO ARDUINO</button>
+        <button class="btn-action" style="background: #ff9f43;" onclick="start()">▶ RODAR PREVIEW</button>
+        <button class="btn-action" style="background: #54a0ff;" onclick="gerarArduino()">💾 GERAR CÓDIGO ARDUINO</button>
+        <textarea id="code-output" readonly></textarea>
     </div>
 </div>
 
 <xml id="toolbox" style="display: none">
-    <category name="Movimento" colour="230">
-        <block type="mover_player"></block>
-        <block type="set_pos"></block>
-    </category>
-    <category name="Colisão" colour="0">
-        <block type="se_colidir"></block>
-    </category>
-    <category name="Gráficos" colour="160">
-        <block type="desenhar_inimigo"></block>
+    <category name="Mundo" colour="160">
+        <block type="criar_parede"></block>
         <block type="escrever_texto"></block>
+    </category>
+    <category name="Personagens" colour="230">
+        <block type="mover_player"></block>
+        <block type="ia_inimigo"></block>
+        <block type="matar_player"></block>
     </category>
     <category name="Lógica" colour="210">
         <block type="controls_if"></block>
         <block type="logic_compare"></block>
+        <block type="se_colidir"></block>
         <block type="math_number"></block>
     </category>
 </xml>
 
 <script>
-// --- CONFIGURAÇÃO DE BLOCOS ---
+// --- 1. DEFINIÇÃO DOS NOVOS BLOCOS ---
 Blockly.defineBlocksWithJsonArray([
     {
-        "type": "mover_player",
-        "message0": "Mover Player: DX %1 DY %2",
-        "args0": [{ "type": "input_value", "name": "DX" }, { "type": "input_value", "name": "DY" }],
-        "previousStatement": null, "nextStatement": null, "colour": 230
-    },
-    {
-        "type": "set_pos",
-        "message0": "Colocar %1 em X: %2 Y: %3",
-        "args0": [
-            { "type": "field_dropdown", "name": "OBJ", "options": [["Inimigo", "enemy"], ["Moeda", "coin"]] },
-            { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }
-        ],
-        "previousStatement": null, "nextStatement": null, "colour": 230
-    },
-    {
-        "type": "se_colidir",
-        "message0": "Se Player tocar no %1",
-        "args0": [{ "type": "field_dropdown", "name": "OBJ", "options": [["Inimigo", "enemy"], ["Moeda", "coin"]] }],
-        "output": "Boolean", "colour": 0
-    },
-    {
-        "type": "desenhar_inimigo",
-        "message0": "Desenhar Inimigo",
+        "type": "criar_parede",
+        "message0": "Criar Parede X: %1 Y: %2 L: %3 A: %4",
+        "args0": [{"type":"input_value","name":"X"},{"type":"input_value","name":"Y"},{"type":"input_value","name":"W"},{"type":"input_value","name":"H"}],
         "previousStatement": null, "nextStatement": null, "colour": 160
     },
     {
-        "type": "escrever_texto",
-        "message0": "Escrever %1 em X: %2 Y: %3",
-        "args0": [{ "type": "input_value", "name": "TXT" }, { "type": "input_value", "name": "X" }, { "type": "input_value", "name": "Y" }],
-        "previousStatement": null, "nextStatement": null, "colour": 160
-    }
+        "type": "matar_player",
+        "message0": "MATAR PLAYER (Reiniciar)",
+        "previousStatement": null, "nextStatement": null, "colour": 0
+    },
+    {
+        "type": "ia_inimigo",
+        "message0": "IA: Inimigo segue Player vel: %1",
+        "args0": [{"type":"input_value","name":"VEL"}],
+        "previousStatement": null, "nextStatement": null, "colour": 290
+    },
+    { "type": "mover_player", "message0": "Mover Player DX: %1 DY: %2", "args0": [{"type":"input_value","name":"DX"},{"type":"input_value","name":"DY"}], "previousStatement": null, "nextStatement": null, "colour": 230 },
+    { "type": "escrever_texto", "message0": "Texto: %1 em X:%2 Y:%3", "args0": [{"type":"input_value","name":"T"},{"type":"input_value","name":"X"},{"type":"input_value","name":"Y"}], "previousStatement": null, "nextStatement": null, "colour": 160 },
+    { "type": "se_colidir", "message0": "Player toca no Inimigo?", "output": "Boolean", "colour": 210 }
 ]);
 
-// --- ENGINE DO PREVIEW (JAVASCRIPT) ---
+// --- 2. ENGINE DO PREVIEW ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let player = { x: 64, y: 32 };
-let enemy = { x: 20, y: 20 };
-let keys = { up: false, down: false, left: false, right: false };
-let gameLoop;
+let px=64, py=32, ex=10, ey=10;
+let walls = [];
+let keys = {u:0, d:0, l:0, r:0};
+let loop;
 
-function setKey(k, v) { keys[k] = v; }
+function k(key, val) { keys[key] = val; }
 
-function startPreview() {
-    if(gameLoop) clearInterval(gameLoop);
-    gameLoop = setInterval(() => {
-        // Limpar tela (Verde GameBoy)
-        ctx.fillStyle = "#99ad82";
-        ctx.fillRect(0, 0, 128, 64);
-        
-        ctx.fillStyle = "#2d3325"; // Cor dos pixels acesos
-        
-        // Simular controles
-        if(keys.up) player.y -= 1;
-        if(keys.down) player.y += 1;
-        if(keys.left) player.x -= 1;
-        if(keys.right) player.x += 1;
-
-        // Desenhar Player
-        ctx.fillRect(player.x, player.y, 6, 6);
-
-        // Aqui o interpretador executaria a lógica dos blocos... 
-        // Para o teste, vamos desenhar o inimigo
-        ctx.strokeRect(enemy.x, enemy.y, 6, 6);
-
-        // Teste de colisão simples
-        if(Math.abs(player.x - enemy.x) < 6 && Math.abs(player.y - enemy.y) < 6) {
-            ctx.fillText("COLISÃO!", 40, 10);
-        }
-    }, 30);
+function checkWall(nx, ny) {
+    return walls.some(w => nx < w.x + w.w && nx + 4 > w.x && ny < w.y + w.h && ny + 4 > w.y);
 }
 
-// --- GERADOR DE ARDUINO ---
-const workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox'), theme: 'dark' });
+function start() {
+    if(loop) clearInterval(loop);
+    px=64; py=32; ex=10; ey=10;
+    
+    loop = setInterval(() => {
+        // Limpar
+        ctx.fillStyle = "#8bac0f";
+        ctx.fillRect(0,0,128,64);
+        ctx.fillStyle = "#0f380f";
+
+        // Resetar paredes a cada frame para os blocos reconstruírem
+        walls = [];
+        
+        // Executar código dos blocos no Preview (Interpretador Simples)
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        try { eval(code); } catch(e) {}
+
+        // Movimento com colisão de parede
+        let nextX = px, nextY = py;
+        if(keys.u) nextY--; if(keys.d) nextY++;
+        if(keys.l) nextX--; if(keys.r) nextX++;
+        
+        if(!checkWall(nextX, py)) px = nextX;
+        if(!checkWall(px, nextY)) py = nextY;
+
+        // Desenhar Player e Inimigo
+        ctx.fillRect(px, py, 4, 4); 
+        ctx.strokeRect(ex, ey, 5, 5); 
+    }, 50);
+}
+
+// --- 3. GERADORES DE CÓDIGO ---
+const workspace = Blockly.inject('blocklyDiv', {toolbox:document.getElementById('toolbox'), theme:'dark'});
+
+// Tradução para o Preview (JS)
+Blockly.JavaScript['criar_parede'] = function(block) {
+    const x = Blockly.JavaScript.valueToCode(block, 'X', 0);
+    const y = Blockly.JavaScript.valueToCode(block, 'Y', 0);
+    const w = Blockly.JavaScript.valueToCode(block, 'W', 0);
+    const h = Blockly.JavaScript.valueToCode(block, 'H', 0);
+    return `walls.push({x:${x}, y:${y}, w:${w}, h:${h}}); ctx.fillRect(${x},${y},${w},${h});\n`;
+};
+
+Blockly.JavaScript['ia_inimigo'] = function(block) {
+    const v = Blockly.JavaScript.valueToCode(block, 'VEL', 0) || '0.5';
+    return `if(ex < px) ex+=${v}; if(ex > px) ex-=${v}; if(ey < py) ey+=${v}; if(ey > py) ey-=${v};\n`;
+};
+
+Blockly.JavaScript['matar_player'] = function(block) {
+    return `if(Math.abs(px-ex)<5 && Math.abs(py-ey)<5) { px=64; py=32; }\n`;
+};
+
+// Funções auxiliares de matemática para o gerador
+Blockly.JavaScript['math_number'] = function(block) { return [block.getFieldValue('NUM'), 0]; };
+Blockly.JavaScript['mover_player'] = function(block) { 
+    return `px += ${Blockly.JavaScript.valueToCode(block, 'DX', 0)}; py += ${Blockly.JavaScript.valueToCode(block, 'DY', 0)};\n`; 
+};
 
 function gerarArduino() {
-    // Definimos o gerador para Arduino (usando o JS como base para simplificar)
     const code = Blockly.JavaScript.workspaceToCode(workspace);
-    const template = `
+    const cleanCode = code.replace(/ctx\..*;/g, '').replace(/walls\.push.*;/g, ''); // Limpa comandos de canvas
+    
+    document.getElementById('code-output').value = `
 #include <Adafruit_SSD1306.h>
-Adafruit_SSD1306 display(128, 64, &Wire, -1);
-int px=64, py=32, ex=20, ey=20;
+Adafruit_SSD1306 d(128, 64, &Wire, -1);
+float px=64, py=32, ex=10, ey=10;
 
 void setup() {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  pinMode(2, INPUT_PULLUP); // Cima
+  d.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  pinMode(2, INPUT_PULLUP); // Exemplo de pino
 }
 
 void loop() {
-  display.clearDisplay();
-  
-  // Lógica dos Blocos:
-  ${code.replace(/player\./g, 'p').replace(/enemy\./g, 'e')}
-
-  if(digitalRead(2) == LOW) py--;
-
-  display.fillRect(px, py, 6, 6, WHITE);
-  display.drawRect(ex, ey, 6, 6, WHITE);
-  display.display();
+  d.clearDisplay();
+  // --- LÓGICA DOS BLOCOS ---
+  ${cleanCode}
+  // -----------------------
+  d.fillRect(px, py, 4, 4, WHITE);
+  d.drawRect(ex, ey, 5, 5, WHITE);
+  d.display();
+  delay(30);
 }`;
-    document.getElementById('codigo-box').innerText = template;
 }
-
-// Lógica de tradução simplificada dos blocos
-Blockly.JavaScript['mover_player'] = function(block) {
-    var dx = Blockly.JavaScript.valueToCode(block, 'DX', 0) || '0';
-    var dy = Blockly.JavaScript.valueToCode(block, 'DY', 0) || '0';
-    return `player.x += ${dx}; player.y += ${dy};\n`;
-};
-
-Blockly.JavaScript['se_colidir'] = function(block) {
-    return [`(Math.abs(player.x - enemy.x) < 6 && Math.abs(player.y - enemy.y) < 6)`, 0];
-};
-
-Blockly.JavaScript['math_number'] = function(block) { return [block.getFieldValue('NUM'), 0]; };
 </script>
 </body>
 </html>
